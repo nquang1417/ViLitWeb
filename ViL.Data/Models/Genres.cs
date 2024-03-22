@@ -8,7 +8,7 @@ namespace ViL.Data.Models
     {
         [Key]
         public string GenreId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "GenreName is required")]
         public string GenreName { get; set; }
         public string? Description { get; set; }
 

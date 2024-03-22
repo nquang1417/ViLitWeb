@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace ViL.Data.Models
 {
     [Table("Bookmark")]
-    public class Bookmarks
+    public class Bookmarks : EntityBase
     {
         [Key]
         public string BookmarkId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "UserId is required")]
         public string UserId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "ChapterId is required")]
         public string ChapterId { get; set; }
         public int BookmarkLine { get; set; }
         public string? Notes { get; set; }

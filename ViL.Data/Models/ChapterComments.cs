@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace ViL.Data.Models
 {
     [Table("ChapterComments")]
-    public class ChapterComments
+    public class ChapterComments : EntityBase
     {
         [Key]
         public string CommentId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "ChapterId is required")]
         public string ChapterId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "UserId is required")]
         public string UserId { get; set; }
         
         public string CommentContent { get; set; }

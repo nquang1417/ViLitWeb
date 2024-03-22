@@ -1,9 +1,6 @@
-﻿using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using ViL.Common.Exceptions;
@@ -14,31 +11,33 @@ using ViL.Services.Infrastructure;
 
 namespace ViL.Services.Services
 {
-    public interface IBookChaptersService : IServices<BookChapters>
+    public interface IBookReviewsService : IServices<BookReviews>
     {
     }
 
-    public class BookChaptersService : ServiceBase<BookChapters>, IBookChaptersService
+    public class BookReviewsService : ServiceBase<BookReviews>, IBookReviewsService
     {
+        public BookReviewsService(IBookReviewsRepository repository, ViLDbContext dbContext) : base(repository, dbContext) { }
 
-        public BookChaptersService(IBookChaptersRepository chapterRepository, ViLDbContext dbContext) : base(chapterRepository, dbContext) 
-        {
-        }
-
-        protected override bool validate(BookChapters entity, bool isUpdate = false)
+        protected override bool validate(BookReviews entity, bool isUpdate = false)
         {
             if (!isUpdate)
             {
-                return base.validate(entity);
+                return base.validate(entity, isUpdate);
             }
             var isValid = true;
-            var query = _repository.GetById(entity.ChapterId);
+            var query = _repository.GetById(entity.ReviewId);
             if (query != null)
             {
                 if (query.BookId != entity.BookId)
                 {
                     isValid = false;
                     listErrorMsgs.Add("BookId không được phép thay đổi");
+                }
+                if (query.UserId != entity.UserId)
+                {
+                    isValid = false;
+                    listErrorMsgs.Add("UserId không được phép thay đổi");
                 }
             } else
             {

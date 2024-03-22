@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
+using ViL.Common.Exceptions;
 using ViL.Data;
 using ViL.Data.Models;
 using ViL.Services.Services;
@@ -10,8 +11,8 @@ namespace ViL.Api.Controllers
     [Route("api/[controller]")]
     public class UsersController : Controller
     {
-        private UsersService _usersService;
-        public UsersController(UsersService usersService)
+        private IUsersService _usersService;
+        public UsersController(IUsersService usersService)
         {
             _usersService = usersService;
         }
@@ -19,23 +20,65 @@ namespace ViL.Api.Controllers
         [HttpGet] 
         public IActionResult GetAll()
         {
-            return Ok(_usersService.GetAllUsers());
+            try
+            {
+                return Ok(_usersService.GetAll());
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
-            return Ok(_usersService.GetById(id));
+            try
+            {
+                var user = _usersService.GetById(id);
+                return Ok(user);
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
-        [HttpPost] 
+        [HttpPost("add")] 
         public IActionResult Add(Users user)
         {
-            _usersService.AddUser(user);
-            return Ok();
+            try
+            {
+                _usersService.Add(user);
+                return Created();
+            } catch (Exception ex)
+            {
+                var error = new
+                {
+                    Msg = ex.Message,
+                    ErrorMsgs = ex.Data["validateErr"]
+                };
+                return BadRequest(error);
+            }            
         }
 
-        [HttpDelete]
+        [HttpPut("update")]
+        public IActionResult Update(Users user)
+        {
+            try
+            {
+                _usersService.Update(user);
+                return Ok();
+            } catch (Exception ex)
+            {
+                var error = new
+                {
+                    Msg = ex.Message,
+                    ErrorMsgs = ex.Data["validateErr"]
+                };
+                return BadRequest(error);
+            }
+        }
+
+        [HttpDelete("delete")]
         public IActionResult Delete(string id)
         {
             _usersService.Delete(s => s.UserId == id);

@@ -15,6 +15,6 @@ namespace ViL.Data.Infrastructure
         void Delete (T entity);
         void Delete (Expression<Func<T, bool>> where);
         T? GetById(string id);
-        T? Get(Expression<Func<T, bool>> where);
+        IEnumerable<T> Get(Expression<Func<T, bool>> where);
     }
 }

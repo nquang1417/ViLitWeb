@@ -8,9 +8,9 @@ namespace ViL.Data.Models
     {
         [Key]
         public string BookId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "BookTitle is required")]
         public string BookTitle { get; set; }
-        [Required]
+        [Required(ErrorMessage = "GenreId is required")]
         public string GenreId { get; set; }
         public string? Description { get; set; }
         public string? BookCover { get; set; }

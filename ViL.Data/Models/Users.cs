@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ViL.Data.Models
@@ -9,7 +10,9 @@ namespace ViL.Data.Models
     {
         [Key]
         public string UserId { get; set; }
+        [Required(ErrorMessage = "Username is required")]
         public string Username { get; set; }
+        [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; }
         public short Role { get; set; }
         public string? DisplayName { get; set; }

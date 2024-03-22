@@ -8,6 +8,7 @@ namespace ViL.Data.Models
     {
         [Key]
         public string TagId { get; set; }
+        [Required(ErrorMessage = "TagName is required")]
         public string TagName { get; set; }
         public string? Description { get; set; }
 

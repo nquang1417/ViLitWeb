@@ -5,10 +5,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using ViL.Data.Models;
 
 namespace ViL.Data.Infrastructure
 {
-    public class RepositoryBase<T> where T : class
+    public class RepositoryBase<T> where T : EntityBase
     {
         private ViLDbContext _context;
         private DbSet<T> dbset;
@@ -36,7 +37,7 @@ namespace ViL.Data.Infrastructure
 
         public virtual void Update(T entity)
         {
-            dbset.Attach(entity);
+            dbset.Update(entity);
             _context.Entry(entity).State = EntityState.Modified;
             _context.SaveChanges();
         }
@@ -63,9 +64,9 @@ namespace ViL.Data.Infrastructure
             return dbset.Find(id);
         }
 
-        public virtual T? Get(Expression<Func<T, bool>> where)
+        public virtual IEnumerable<T> Get(Expression<Func<T, bool>> where)
         {
-            return dbset.Where<T>(where).FirstOrDefault();
+            return dbset.Where<T>(where).AsEnumerable();
         }
 
         public void SaveChanges()

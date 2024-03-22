@@ -8,7 +8,9 @@ namespace ViL.Data.Models
     {
         [Key]
         public string ReadingId { get; set; }
-        public string UserId { get; set; }        
+        [Required(ErrorMessage = "UserId is required")]
+        public string UserId { get; set; }
+        [Required(ErrorMessage = "LastChapterId is required")]
         public string LastChapterId { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }

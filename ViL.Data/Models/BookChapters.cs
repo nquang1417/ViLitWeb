@@ -8,7 +8,7 @@ namespace ViL.Data.Models
     {
         [Key]        
         public string ChapterId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "BookId is required")]
         public string BookId { get; set; }
         public string? ChapterTitle { get; set; }
         public int? ChapterNum { get; set; }
@@ -25,12 +25,12 @@ namespace ViL.Data.Models
             BookId = string.Empty;
         }
 
-        public BookChapters(string bookId) : base()
+        public BookChapters(string bookId, int chapterNo) : base()
         {
-            ChapterId = Guid.NewGuid().ToString();
+            ChapterId = bookId + chapterNo.ToString();
             BookId = bookId;
             ChapterTitle = string.Empty;
-            ChapterNum = 0;
+            ChapterNum = chapterNo;
             Images = string.Empty;
             FileName = string.Empty;
             Url = BookId;

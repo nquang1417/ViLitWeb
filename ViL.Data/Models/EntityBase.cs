@@ -5,19 +5,19 @@ namespace ViL.Data.Models
 {
     public abstract class EntityBase
     {
-        public string? Status { get; set; }
+        public int Status { get; set; }
         public DateTime? CreateDate { get; set; }
         public string? CreateBy { get; set; }
         public DateTime? UpdateDate { get; set; }
         public string? UpdateBy { get; set; }
 
-        public EntityBase(string status = "1")
+        public EntityBase(int status = 1, string creaeteBy = "", string updateBy = "")
         {
             Status = status;
             CreateDate = DateTime.Now;
-            CreateBy = string.Empty;
+            CreateBy = creaeteBy;
             UpdateDate = DateTime.Now;
-            UpdateBy = string.Empty;
+            UpdateBy = updateBy;
         }
 
         public virtual PropertyInfo[] GetKeys()

@@ -17,6 +17,7 @@ namespace ViL.Data
         public DbSet<ChapterComments> ChapterComments { get; set; }
         public DbSet<DailyReadingStatistics> DailyReadingStatistics { get; set; }
         public DbSet<Genres> Genres { get; set; }
+        public DbSet<Notifications> Notifications { get; set; }
         public DbSet<ReadingHistory> ReadingHistory { get; set; }
         public DbSet<Tags> Tags { get; set; }
         public DbSet<UserFavoriteBooks> UserFavoriteBooks { get; set; }
@@ -29,6 +30,7 @@ namespace ViL.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<BookTags>().HasNoKey();
+            modelBuilder.Entity<BookStatisticsInfo>().HasNoKey();
             modelBuilder.Entity<UserFavoriteBooks>().HasNoKey();
             modelBuilder.Entity<UserLikedChapters>().HasNoKey();
             modelBuilder.Entity<UserLikedComments>().HasNoKey();

@@ -6,7 +6,7 @@ namespace ViL.Data.Models
     [Table("BookStatisticsInfo")]
     public class BookStatisticsInfo : EntityBase
     {
-        [Key]
+        [Required(ErrorMessage = "BookId is required")]
         public string BookId { get; set; }
         public int? Views { get; set; }
         public int? Followers { get; set; }

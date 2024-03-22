@@ -13,11 +13,13 @@ namespace ViL.Data.Models
     {
         [Key]
         public string ReviewId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "BookId is required")]
         public string BookId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "UserId is required")]
         public string UserId { get; set; }
+        [Required(ErrorMessage = "ReviewContent is required")]
         public string ReviewContent { get; set; }
+        [Required(ErrorMessage = "RatingScore is required")]
         public float RatingScore { get; set; }
         public int? Likes { get; set; }
         public int? Replies { get; set; }
