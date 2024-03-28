@@ -19,6 +19,7 @@ namespace ViL.Data
         public DbSet<Genres> Genres { get; set; }
         public DbSet<Notifications> Notifications { get; set; }
         public DbSet<ReadingHistory> ReadingHistory { get; set; }
+        public DbSet<Reports> Reports { get; set; }
         public DbSet<Tags> Tags { get; set; }
         public DbSet<UserFavoriteBooks> UserFavoriteBooks { get; set; }
         public DbSet<UserLikedChapters> UserLikedChapters { get; set; }

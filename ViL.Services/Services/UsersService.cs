@@ -13,7 +13,7 @@ namespace ViL.Services.Services
 
     public class UsersService : ServiceBase<Users>, IUsersService
     {
-        public UsersService(IUsersRepository repository, ViLDbContext viLDbContext) : base(repository, viLDbContext)
+        public UsersService(IUsersRepository repository, ViLDbContext dbContext) : base(repository, dbContext)
         {
         }
 

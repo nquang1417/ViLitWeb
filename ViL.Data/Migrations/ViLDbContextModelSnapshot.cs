@@ -472,6 +472,53 @@ namespace ViL.Data.Migrations
                     b.ToTable("ReadingHistory");
                 });
 
+            modelBuilder.Entity("ViL.Data.Models.Reports", b =>
+                {
+                    b.Property<string>("ReportsId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreateBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReportContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReportedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReportedEntityId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ReportedType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Response")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdateBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ReportsId");
+
+                    b.ToTable("Reports");
+                });
+
             modelBuilder.Entity("ViL.Data.Models.Tags", b =>
                 {
                     b.Property<string>("TagId")
@@ -626,6 +673,9 @@ namespace ViL.Data.Migrations
 
                     b.Property<string>("Avatar")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("BannedExpired")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("Coins")
                         .HasColumnType("int");

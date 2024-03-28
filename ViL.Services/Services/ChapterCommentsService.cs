@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ViL.Common.Exceptions;
+﻿using ViL.Common.Exceptions;
 using ViL.Data;
-using ViL.Data.Infrastructure;
 using ViL.Data.Models;
+using ViL.Data.Repositories;
 using ViL.Services.Infrastructure;
 
 namespace ViL.Services.Services
@@ -17,7 +12,7 @@ namespace ViL.Services.Services
 
     public class ChapterCommentsService : ServiceBase<ChapterComments>, IChapterCommentsService
     {
-        public ChapterCommentsService(IRepository<ChapterComments> repository, ViLDbContext viLDbContext) : base(repository, viLDbContext)
+        public ChapterCommentsService(IChapterCommentsRepository repository, ViLDbContext dbContext) : base(repository, dbContext)
         {
         }
 

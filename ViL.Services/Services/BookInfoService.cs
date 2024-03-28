@@ -1,11 +1,4 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using ViL.Data;
+﻿using ViL.Data;
 using ViL.Data.Models;
 using ViL.Data.Repositories;
 using ViL.Services.Infrastructure;

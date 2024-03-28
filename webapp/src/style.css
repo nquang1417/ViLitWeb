@@ -1,0 +1,222 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #242424;
+  background-color: #fff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  font-family: 'Roboto';
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url("@/assets/font/Roboto-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Roboto Medium";
+  src: url("@/assets/font/Roboto-Medium.ttf");
+}
+
+@font-face {
+  font-family: "Roboto Bold";
+  src: url("@/assets/font/Roboto-Bold.ttf");
+}
+
+@font-face {
+  font-family: "Roboto Italic";
+  src: url("@/assets/font/Roboto-Italic.ttf");
+}
+
+@font-face {
+  font-family: "Roboto Light";
+  src: url("@/assets/font/Roboto-Light.ttf");
+}
+
+@font-face {
+  font-family: "Roboto Thin";
+  src: url("@/assets/font/Roboto-Thin.ttf");
+}
+
+
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+a {
+  font-weight: 500;
+  color: #242424;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+  opacity: 0.8;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+  padding: 2em;
+}
+
+@media only screen and (min-width: 768px) {
+  #app {
+    max-width: 992px;
+    margin: 0;
+    /* text-align: center; */
+    width: 100%;
+    /* overflow: visible; */
+  }
+}
+
+@media only screen and (min-width: 992px) {
+  #app {
+    max-width: 1220px;
+    margin: 0;
+    /* text-align: center; */
+    width: 100%;
+    /* overflow: visible; */
+  }
+}
+
+@media only screen and (min-width: 1220px) {
+  #app {
+    max-width: 1920px;
+    margin: 0;
+    /* text-align: center; */
+    width: 100%;
+    /* overflow: visible; */
+  }
+}
+
+@media only screen and (min-width: 1920px) {
+  #app {
+    max-width: 2560px;
+    margin: 0;
+    /* text-align: center; */
+    width: 100%;
+    /* overflow: visible; */
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+.el-input {
+  vertical-align: middle;
+}
+
+.signInBtn .el-dialog__header {
+  display: inline-flex;
+  cursor: default;
+}
+
+.signInBtn .el-dialog {
+  cursor: default;
+}
+
+.signInBtn .el-dialog__body {
+  padding: 20px 10px;
+}
+
+.signInBtn .el-dialog__footer {
+  padding: 5px 10px 10px;
+}
+
+.ck-content {
+  height: 200px;
+  color: #242424;
+}
+
+.ck.ck-editor {
+  width: 100% !important;
+}
+
+.el-dialog__headerbtn:focus {
+  outline: none;
+}
+
+.el-menu-item.is-active.logo {
+  border-bottom: none !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.el-header {
+  transform: translateY(0);
+  transition: transform 300ms linear;
+}
+
+.el-header.is-hidden {
+  transform: translateY(-100%);
+}

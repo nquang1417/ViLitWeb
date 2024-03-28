@@ -26,8 +26,30 @@ namespace ViL.Api
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
             /// Add Services
+            services.AddScoped<IBookChaptersRepository, BookChaptersRepository>();
+            services.AddScoped<IBookChaptersService, BookChaptersService>();
+
+            services.AddScoped<IBookInfoRepository, BookInfoRepository>();
+            services.AddScoped<IBookInfoService, BookInfoService>();
+
+            services.AddScoped<IBookmarksRepository, BookmarksRepository>();
+            services.AddScoped<IBookmarksService, BookmarksService>();
+
+            services.AddScoped<IBookReviewsRepository, BookReviewsRepository>();
+            services.AddScoped<IBookReviewsService, BookReviewsService>();
+
+            services.AddScoped<IBookStatisticsInfoRepository, BookStatisticsInfoRepository>();
+            services.AddScoped<IBookStatisticsInfoService, BookStatisticsInfoService>();
+
+            services.AddScoped<IBookTagsRepository, BookTagsRepository>();
+            services.AddScoped<IBookTagsService, BookTagsService>();
+
+            services.AddScoped<IChapterCommentsRepository, ChapterCommentsRepository>();
+            services.AddScoped<IChapterCommentsService, ChapterCommentsService>();
+
             services.AddScoped<IUsersRepository,UsersRepository>();
             services.AddScoped<IUsersService, UsersService>();
+
         }
 
         public void Configure(WebApplication app, IWebHostEnvironment env)

@@ -28,6 +28,7 @@ namespace ViL.Data.Models
         public int? FollowingItems { get; set; }
         public TimeSpan? HourReading { get; set; }
         public string? Url { get; set; }
+        public DateTime? BannedExpired { get; set; }
         
         public Users() : base()
         {
