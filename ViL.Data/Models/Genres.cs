@@ -12,6 +12,13 @@ namespace ViL.Data.Models
         public string GenreName { get; set; }
         public string? Description { get; set; }
 
+        public Genres()
+        {
+            GenreId = "";
+            GenreName = "";
+            Description = "";
+        }
+
         public Genres(string genreName) : base()
         {
             GenreId = Guid.NewGuid().ToString();

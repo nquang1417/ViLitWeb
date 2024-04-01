@@ -14,14 +14,24 @@ namespace ViL.Data.Models
         public int? Comments { get; set; }
         public double? AverageRating { get; set; }
 
-        public BookStatisticsInfo(string BookId) : base() 
+        public BookStatisticsInfo() : base()
         {
-            this.BookId = BookId;
-            this.Views = 0;
-            this.Followers = 0;
-            this.Reviews = 0;
-            this.Comments = 0;
-            this.AverageRating = 0;
+            BookId = "";
+            Views = 0;
+            Followers = 0;
+            Reviews = 0;
+            Comments = 0;
+            AverageRating = 0;
+        }
+
+        public BookStatisticsInfo(string bookId) : base() 
+        {
+            BookId = bookId;
+            Views = 0;
+            Followers = 0;
+            Reviews = 0;
+            Comments = 0;
+            AverageRating = 0;
         }
     }
 }

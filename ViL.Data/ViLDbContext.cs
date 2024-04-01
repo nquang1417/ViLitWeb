@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ViL.Data.Models;
+using ViL.Data.Views;
 
 namespace ViL.Data
 {
@@ -26,6 +27,7 @@ namespace ViL.Data
         public DbSet<UserLikedComments> UserLikedComments { get; set; }
         public DbSet<UserLikedReviews> UserLikedReviews { get; set; }
         public DbSet<Users> Users { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

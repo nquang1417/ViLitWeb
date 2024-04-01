@@ -10,6 +10,8 @@ namespace ViL.Data.Models
         public string ReadingId { get; set; }
         [Required(ErrorMessage = "UserId is required")]
         public string UserId { get; set; }
+        [Required(ErrorMessage = "BookId is required")]
+        public string BookId { get; set; }
         [Required(ErrorMessage = "LastChapterId is required")]
         public string LastChapterId { get; set; }
         public DateTime? StartTime { get; set; }
@@ -19,13 +21,15 @@ namespace ViL.Data.Models
         {
             ReadingId = Guid.NewGuid().ToString();
             UserId = "";
+            BookId = "";
             LastChapterId = "";
         }
 
-        public ReadingHistory(string userId, string lastChapterId)
+        public ReadingHistory(string userId, string bookId, string lastChapterId)
         {
             ReadingId = Guid.NewGuid().ToString();
             UserId = userId;
+            BookId = bookId;
             LastChapterId = lastChapterId;
         }
     }

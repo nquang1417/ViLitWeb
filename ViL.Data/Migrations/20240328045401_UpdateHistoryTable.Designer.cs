@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ViL.Data;
 
@@ -11,9 +12,11 @@ using ViL.Data;
 namespace ViL.Data.Migrations
 {
     [DbContext(typeof(ViLDbContext))]
-    partial class ViLDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240328045401_UpdateHistoryTable")]
+    partial class UpdateHistoryTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,7 +75,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("ChapterId");
 
-                    b.ToTable("BookChapters", (string)null);
+                    b.ToTable("BookChapters");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.BookInfo", b =>
@@ -130,7 +133,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("BookId");
 
-                    b.ToTable("BookInfo", (string)null);
+                    b.ToTable("BookInfo");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.BookReviews", b =>
@@ -179,7 +182,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("ReviewId");
 
-                    b.ToTable("BookReviews", (string)null);
+                    b.ToTable("BookReviews");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.BookStatisticsInfo", b =>
@@ -218,7 +221,7 @@ namespace ViL.Data.Migrations
                     b.Property<int?>("Views")
                         .HasColumnType("int");
 
-                    b.ToTable("BookStatisticsInfo", (string)null);
+                    b.ToTable("BookStatisticsInfo");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.BookTags", b =>
@@ -246,7 +249,7 @@ namespace ViL.Data.Migrations
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("datetime2");
 
-                    b.ToTable("BookTags", (string)null);
+                    b.ToTable("BookTags");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.Bookmarks", b =>
@@ -285,7 +288,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("BookmarkId");
 
-                    b.ToTable("Bookmark", (string)null);
+                    b.ToTable("Bookmark");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.ChapterComments", b =>
@@ -331,7 +334,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("CommentId");
 
-                    b.ToTable("ChapterComments", (string)null);
+                    b.ToTable("ChapterComments");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.DailyReadingStatistics", b =>
@@ -362,7 +365,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("DailyReadingStatistics", (string)null);
+                    b.ToTable("DailyReadingStatistics");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.Genres", b =>
@@ -394,7 +397,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("GenreId");
 
-                    b.ToTable("Genres", (string)null);
+                    b.ToTable("Genres");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.Notifications", b =>
@@ -430,7 +433,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("NotiId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.ReadingHistory", b =>
@@ -473,7 +476,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("ReadingId");
 
-                    b.ToTable("ReadingHistory", (string)null);
+                    b.ToTable("ReadingHistory");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.Reports", b =>
@@ -518,7 +521,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("ReportsId");
 
-                    b.ToTable("Reports", (string)null);
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.Tags", b =>
@@ -550,7 +553,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("TagId");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.UserFavoriteBooks", b =>
@@ -578,7 +581,7 @@ namespace ViL.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("UserFavoriteBooks", (string)null);
+                    b.ToTable("UserFavoriteBooks");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.UserLikedChapters", b =>
@@ -606,7 +609,7 @@ namespace ViL.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("UserLikedChapters", (string)null);
+                    b.ToTable("UserLikedChapters");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.UserLikedComments", b =>
@@ -634,7 +637,7 @@ namespace ViL.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("UserLikedComments", (string)null);
+                    b.ToTable("UserLikedComments");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.UserLikedReviews", b =>
@@ -662,7 +665,7 @@ namespace ViL.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("UserLikedReviews", (string)null);
+                    b.ToTable("UserLikedReviews");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.Users", b =>
@@ -740,7 +743,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 #pragma warning restore 612, 618
         }

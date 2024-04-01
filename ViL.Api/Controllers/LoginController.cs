@@ -47,8 +47,8 @@ namespace ViL.Api.Controllers
                 new Claim("password", user.Password),
                 new Claim("role", ((UserRole)user.Role).ToString())
             };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtKey"]));
+            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtKey"] ?? "Secret Key"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

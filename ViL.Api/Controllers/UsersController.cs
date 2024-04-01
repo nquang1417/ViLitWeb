@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using ViL.Common.Exceptions;
 using ViL.Data;
@@ -12,17 +13,18 @@ namespace ViL.Api.Controllers
     public class UsersController : Controller
     {
         private IUsersService _usersService;
+
         public UsersController(IUsersService usersService)
         {
             _usersService = usersService;
         }
 
-        [HttpGet] 
+        [HttpGet("all")] 
         public IActionResult GetAll()
         {
             try
             {
-                return Ok(_usersService.GetAll());
+                return Ok(_usersService.GetAll().ToList());
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -35,7 +37,49 @@ namespace ViL.Api.Controllers
             try
             {
                 var user = _usersService.GetById(id);
-                return Ok(user);
+                if (user != null)
+                {
+                    return Ok(user);
+                } else
+                {
+                    return NoContent();
+                }
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("search")]
+        public IActionResult Search(string username = "", string email = "")
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(username) && string.IsNullOrEmpty(email))
+                {
+                    return BadRequest();
+                }
+                if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(email))
+                {
+                    var query = _usersService.Get(u =>  u.Username == username && u.Email == email);
+                    if (query != null)
+                    {
+                        return Ok(query.ToList());
+                    } else
+                    {
+                        return StatusCode(204);
+                    }
+                } else 
+                {
+                    var query = _usersService.Get(u => u.Username == username || u.Email == email);
+                    if (query != null)
+                    {
+                        return Ok(query.ToList());
+                    } else
+                    {
+                        return StatusCode(204);
+                    }
+                }
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -79,10 +123,18 @@ namespace ViL.Api.Controllers
         }
 
         [HttpDelete("delete")]
+
         public IActionResult Delete(string id)
         {
-            _usersService.Delete(s => s.UserId == id);
-            return Ok();
+            try
+            {
+                _usersService.Delete(s => s.UserId == id);
+                return Ok();
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
         }
     }
 }

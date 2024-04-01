@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq.Expressions;
+using ViL.Data.Models;
 
 namespace ViL.Data.Infrastructure
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<T> where T : EntityBase
     {
         IQueryable<T> Table { get; }
         void Add (T entity);
@@ -15,6 +11,6 @@ namespace ViL.Data.Infrastructure
         void Delete (T entity);
         void Delete (Expression<Func<T, bool>> where);
         T? GetById(string id);
-        IEnumerable<T> Get(Expression<Func<T, bool>> where);
+        IQueryable<T> Get(Expression<Func<T, bool>> where);
     }
 }

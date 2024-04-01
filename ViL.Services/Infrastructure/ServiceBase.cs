@@ -16,24 +16,24 @@ namespace ViL.Services.Infrastructure
     {
         protected IRepository<T> _repository;
         protected List<string> listErrorMsgs;
-        protected ViLDbContext ViLDbContext;
+        protected ViLDbContext _context;
 
         public ServiceBase(IRepository<T> repository, ViLDbContext viLDbContext)
         {
             _repository = repository;
             listErrorMsgs = new List<string>();
-            ViLDbContext = viLDbContext;
+            _context = viLDbContext;
         }
 
-        public virtual IEnumerable<T> GetAll()
+        public virtual IQueryable<T> GetAll()
         {
-            return _repository.Table.ToList();
+            return _repository.Table;
         }
 
-        public virtual IEnumerable<T> Get(Expression<Func<T, bool>> where)
+        public virtual IQueryable<T> Get(Expression<Func<T, bool>> where)
         {
             var query = _repository.Get(where); 
-            return query.ToList();
+            return query;
         }
         public virtual T GetById(string id)
         {

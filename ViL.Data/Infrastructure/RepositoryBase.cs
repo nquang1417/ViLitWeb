@@ -11,8 +11,8 @@ namespace ViL.Data.Infrastructure
 {
     public class RepositoryBase<T> where T : EntityBase
     {
-        private ViLDbContext _context;
-        private DbSet<T> dbset;
+        protected ViLDbContext _context;
+        protected DbSet<T> dbset;
 
         public RepositoryBase(ViLDbContext context)
         {
@@ -64,9 +64,9 @@ namespace ViL.Data.Infrastructure
             return dbset.Find(id);
         }
 
-        public virtual IEnumerable<T> Get(Expression<Func<T, bool>> where)
+        public virtual IQueryable<T> Get(Expression<Func<T, bool>> where)
         {
-            return dbset.Where<T>(where).AsEnumerable();
+            return dbset.Where(where);
         }
 
         public void SaveChanges()

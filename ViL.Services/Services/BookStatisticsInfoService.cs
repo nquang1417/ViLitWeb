@@ -1,4 +1,6 @@
-﻿using ViL.Common.Exceptions;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using ViL.Common.Exceptions;
 using ViL.Data;
 using ViL.Data.Models;
 using ViL.Data.Repositories;
@@ -30,5 +32,6 @@ namespace ViL.Services.Services
             }
             return isValid;
         }
+
     }
 }
