@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ViL.Data;
 
@@ -11,9 +12,11 @@ using ViL.Data;
 namespace ViL.Data.Migrations
 {
     [DbContext(typeof(ViLDbContext))]
-    partial class ViLDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240411041833_UpdateChapters")]
+    partial class UpdateChapters
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

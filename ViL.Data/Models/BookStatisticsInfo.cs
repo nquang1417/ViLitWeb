@@ -1,12 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ViL.Common.Commons;
 
 namespace ViL.Data.Models
 {
     [Table("BookStatisticsInfo")]
+    [HasNoKey]
     public class BookStatisticsInfo : EntityBase
     {
         [Required(ErrorMessage = "BookId is required")]
+        [VilUnchanged]
+        [AsKey]
         public string BookId { get; set; }
         public int? Views { get; set; }
         public int? Followers { get; set; }

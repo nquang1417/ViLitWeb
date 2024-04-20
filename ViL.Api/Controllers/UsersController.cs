@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
+using ViL.Api.Models;
 using ViL.Common.Exceptions;
 using ViL.Data;
 using ViL.Data.Models;
@@ -9,6 +10,7 @@ using ViL.Services.Services;
 namespace ViL.Api.Controllers
 {
     [ApiController]
+
     [Route("api/[controller]")]
     public class UsersController : Controller
     {
@@ -19,7 +21,8 @@ namespace ViL.Api.Controllers
             _usersService = usersService;
         }
 
-        [HttpGet("all")] 
+        [HttpGet("all")]
+        [ViLAuthorize]        
         public IActionResult GetAll()
         {
             try
@@ -86,13 +89,13 @@ namespace ViL.Api.Controllers
             }
         }
 
-        [HttpPost("add")] 
+        [HttpPost("add")]
         public IActionResult Add(Users user)
         {
             try
             {
                 _usersService.Add(user);
-                return Created();
+                return StatusCode(201);
             } catch (Exception ex)
             {
                 var error = new
@@ -105,10 +108,11 @@ namespace ViL.Api.Controllers
         }
 
         [HttpPut("update")]
+        [ViLAuthorize]
         public IActionResult Update(Users user)
         {
             try
-            {
+            {                
                 _usersService.Update(user);
                 return Ok();
             } catch (Exception ex)
@@ -123,7 +127,6 @@ namespace ViL.Api.Controllers
         }
 
         [HttpDelete("delete")]
-
         public IActionResult Delete(string id)
         {
             try

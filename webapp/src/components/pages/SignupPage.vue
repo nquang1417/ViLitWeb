@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="js">
 import { mapActions, mapGetters } from 'vuex'
 
 export default {

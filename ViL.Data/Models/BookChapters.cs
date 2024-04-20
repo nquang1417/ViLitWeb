@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ViL.Common.Enums;
 
 namespace ViL.Data.Models
 {
@@ -18,6 +19,7 @@ namespace ViL.Data.Models
         public int? Views { get; set; }
         public int? Comments { get; set; }
         public int? Likes { get; set; }
+        public string? UploaderId { get; set; }
 
         public BookChapters() : base()
         {
@@ -25,15 +27,16 @@ namespace ViL.Data.Models
             BookId = string.Empty;
         }
 
-        public BookChapters(string bookId, int chapterNo) : base()
+        public BookChapters(string bookId, int? chapterNo, string? uploaderId, string? title = null) : base(status: (int)ChapterStatus.Draft)
         {
-            ChapterId = bookId + chapterNo.ToString();
+            ChapterId = Guid.NewGuid().ToString();
             BookId = bookId;
-            ChapterTitle = string.Empty;
+            ChapterTitle = $"Chương {chapterNo}" + (title!= null && title!="" ? $": {title}" : "");
             ChapterNum = chapterNo;
             Images = string.Empty;
-            FileName = string.Empty;
-            Url = BookId;
+            FileName = $"..\\Data\\{bookId}\\text\\{chapterNo.ToString()?.PadLeft(5,'0')}.txt";
+            Url = bookId;
+            UploaderId = uploaderId;
             Views = 0;
             Comments = 0;
             Likes = 0;

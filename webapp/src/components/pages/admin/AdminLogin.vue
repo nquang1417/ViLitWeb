@@ -17,8 +17,8 @@ export default {
     computed: {
         ...mapGetters('auth', {
             getterLoginStatus: 'getLoginStatus',
-            gettersAuthData: 'getAuthData',
-        })
+            gettersAuthData: 'getAuthData',            
+        }),
     },
     watch: {
         getterLoginStatus(value) {
@@ -28,8 +28,7 @@ export default {
     methods: {
         ...mapActions('auth', {
             actionLogin: 'login',
-            actionLogout: 'logout'
-
+            actionLogout: 'logout'            
         }),
         async login() {
             await this.actionLogin({ username: this.form.username, password: this.form.password });

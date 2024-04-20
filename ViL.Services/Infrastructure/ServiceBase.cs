@@ -54,6 +54,7 @@ namespace ViL.Services.Infrastructure
 
         public virtual void Update(T entity)
         {
+
             if (validate(entity, isUpdate: true))
             {
                 _repository.Update(entity);

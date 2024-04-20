@@ -1,9 +1,15 @@
-<script lang="ts">
+<script lang="js">
 export default {
     name: 'FloatMenu',
     data() {
         return {
             
+        }
+    },
+    props: ['next','prev', 'currentChapter'],
+    methods: {
+        saveBookmark(chapter) {
+
         }
     },
 }
@@ -13,7 +19,7 @@ export default {
 <template>
     <div class="float-menu">
         <div class="menu-wrap">
-            <el-button class="float-menu-item" type="default"  @click="this.$router.push('/')">
+            <el-button class="float-menu-item" type="default"  @click="this.$router.push(this.prev)">
                 <i class="fa-solid fa-backward"></i>
             </el-button>
             <div class="divider"></div>
@@ -35,7 +41,7 @@ export default {
                 <i class="fa-solid fa-bookmark"></i>
             </el-button>
             <div class="divider"></div>
-            <el-button class="float-menu-item" type="default"  @click="this.$router.push('/')">
+            <el-button class="float-menu-item" type="default"  @click="this.$router.push(this.next)">
                 <i class="fa-solid fa-forward"></i>
             </el-button>
         </div>

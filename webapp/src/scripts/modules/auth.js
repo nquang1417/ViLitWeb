@@ -1,8 +1,10 @@
 import { tokenAlive } from "../../shared/jwtHelper";
+import { jwtDecrypt } from "../../shared/jwtHelper";
 
 const state = () => {
   const token = localStorage.getItem('access_token');
   var jwtDecodedValue = token ? jwtDecrypt(token) : null;
+  // var jwtDecodedValue = token ? jwtDecode(token) : null;
 
   if (jwtDecodedValue && !tokenAlive(jwtDecodedValue.exp, jwtDecodedValue.role)) {
     jwtDecodedValue = null;
@@ -41,7 +43,7 @@ import axios from 'axios'
 const actions = {
   async login({ commit }, payload) {
     const response = await axios
-      .post("https://localhost:44367/api/login", payload)
+      .post("http://localhost:10454/api/Login", payload)
       .catch((err) => { console.log(err) })
     if (response && response.data) {
       commit("saveTokenData", response.data);
@@ -56,13 +58,13 @@ const actions = {
   }
 };
 
-import { jwtDecrypt } from "../../shared/jwtHelper";
 const mutations = {
   saveTokenData(state, data) {
 
     localStorage.setItem("access_token", data.token);
 
     const jwtDecodedValue = jwtDecrypt(data.token);
+    // const jwtDecodedValue = jwtDecode(data.token);
     const newTokenData = {
       token: data.token,
       tokenExp: jwtDecodedValue.exp,

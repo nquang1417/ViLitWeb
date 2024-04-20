@@ -31,7 +31,7 @@ namespace ViL.Api.Controllers
             {
                 var user = _usersService.Login(loginInfo.username, loginInfo.password);
                 var token = GenerateJwtToken(user);
-                return Ok(token);
+                return Ok(new { token });
             } catch (Exception ex)
             {
                 return Unauthorized(ex.Message);
@@ -42,37 +42,27 @@ namespace ViL.Api.Controllers
         {
             var claims = new[]
             {
-                new Claim("sub", user.UserId),
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserId),
+                new Claim(JwtRegisteredClaimNames.Name, user.DisplayName ?? user.Username),
                 new Claim("username", user.Username),
-                new Claim("password", user.Password),
-                new Claim("role", ((UserRole)user.Role).ToString())
+                new Claim(ClaimTypes.Role, ((UserRole)user.Role).ToString()),                
             };
             
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtKey"] ?? "Secret Key"));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"] ?? "Secret Key"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                issuer: Configuration["JwtIssuer"],
-                audience: Configuration["JwtAudience"],
-                claims: claims,
-                // Thời gian hết hạn của token
-                expires: DateTime.Now.AddHours(8),
-                signingCredentials: creds
-            );
-
-            if (user.Role != 0)
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                token = new JwtSecurityToken(
-                    issuer: Configuration["JwtIssuer"],
-                audience: Configuration["JwtAudience"],
-                claims: claims,
-                expires: DateTime.Now.AddDays(30),
-                // Thời gian hết hạn của token
-                signingCredentials: creds
-                );
-            }
+                Issuer = Configuration["Jwt:Issuer"],
+                Audience = Configuration["Jwt:Audience"],
+                Expires = user.Role == (int)UserRole.Admin ? DateTime.Now.AddHours(8) : DateTime.Now.AddDays(30),
+                SigningCredentials = creds,
+                Subject = new ClaimsIdentity(claims)
+            };
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return tokenHandler.WriteToken(token);
         }
     }
 }

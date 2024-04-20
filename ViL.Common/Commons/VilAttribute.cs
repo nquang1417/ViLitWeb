@@ -10,4 +10,12 @@ namespace ViL.Common.Commons
     public class VilUnchanged : Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class HasNoKey : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class AsKey : Attribute { }
 }

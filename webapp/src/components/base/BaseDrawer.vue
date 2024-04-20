@@ -7,11 +7,7 @@ export default {
             direction: 'ltr',            
         }
     },
-    props: {
-        classList: String,
-        title: String,
-        chapters: Array
-    },
+    props: ['classList', 'title', 'chapters', 'coverUrl'],
     methods: {
         handleClick() {
             this.drawer = true
@@ -28,7 +24,7 @@ export default {
     <el-drawer v-model="drawer" title="I am the title" :direction="direction">
         <template #header>
             <div class="novel-title">
-                <img class="cover" src="https://phutungnhapkhauchinhhang.com/wp-content/uploads/2020/06/default-thumbnail.jpg" height="60" alt="cover"/>
+                <img class="cover" :src="coverUrl" height="60" alt="cover"/>
                 
                 <div class="title">I am the title</div> 
             </div>                       

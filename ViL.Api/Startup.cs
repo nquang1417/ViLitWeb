@@ -1,4 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
+using ViL.Api.Models;
 using ViL.Data;
 using ViL.Data.Infrastructure;
 using ViL.Data.Repositories;
@@ -12,18 +18,52 @@ namespace ViL.Api
         public IConfiguration _configuration;
 
         public Startup(IConfiguration configuration) { _configuration = configuration; }
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(WebApplicationBuilder builder ,IServiceCollection services)
         {
             var ViLDb = "";
+            var HangfireDb = "";
             if (_configuration != null)
             {
                 ViLDb = _configuration.GetConnectionString("ViLitDb");
+                HangfireDb = _configuration.GetConnectionString("HangfireDb");
             }
+            
             services.AddDbContext<ViLDbContext>(options =>
             {
                 options.UseSqlServer(ViLDb);
             });
             services.AddControllersWithViews();
+            /*services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(o =>
+            {
+                o.SaveToken = true;
+                o.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = false,
+                    ValidateIssuerSigningKey = true
+                };
+            });*/
+            /*services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy =>
+                {
+                    policy.RequireClaim(ClaimTypes.Role, "Admin");
+                });
+            });*/
+            services.AddHangfire(x =>
+            {
+                x.UseSqlServerStorage(HangfireDb);
+            });
+            services.AddHangfireServer();
             services.AddCors();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
@@ -94,6 +134,7 @@ namespace ViL.Api
             {
 
             }
+            app.UseHangfireDashboard();
             app.UseRouting();
             app.UseHttpsRedirection();
             app.UseAuthorization();

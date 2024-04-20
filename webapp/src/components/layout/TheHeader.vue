@@ -8,10 +8,10 @@ export default {
             activeIndex: 0,
             dialogFormVisible: false,
             genres: [] as {
-                GenreId: String,
-                GenreName: String,
-                Description: String,
-                Status: String,
+                genreId: String,
+                genreName: String,
+                description: String,
+                status: String,
             }[],
             errors: [],
         }
@@ -57,7 +57,7 @@ export default {
             }
         },
         async loadGenres() {
-            var url = `https://localhost:44367/api/genres`;
+            var url = `http://localhost:10454/api/Genres/lists`;
             await axios.get(url)
             .then(response => {
                 this.genres = response.data;
@@ -77,14 +77,14 @@ export default {
             <el-menu-item index="/" class="logo">
                 <img src="@/assets/logo/logo.png" :height="height">
             </el-menu-item>
-            <div class="import 'element-plus/dist/index.css'"></div>
+            <div class="flex-grow"></div>
             <div class="searchBar" index="/Search" v-if="!reading && !dashboard">
                 <el-autocomplete placeholder="Tìm kiếm"></el-autocomplete>
             </div>
             <el-sub-menu index="/danh-muc" v-if="!dashboard">
                 <template #title>Danh mục</template>
                 <!-- <el-menu-item index="/danh-muc/tan-van">Tản văn</el-menu-item> -->
-                <el-menu-item v-for="genre in genres" :key="genre.GenreId">{{ genre.GenreName }}</el-menu-item>
+                <el-menu-item v-for="genre in genres" :key="genre.genreId">{{ genre.genreName }}</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/dashboard" v-if="!dashboard">Sáng tác</el-menu-item>
             <el-menu-item index="/xep-hang" v-if="!dashboard">Xếp hạng</el-menu-item>
@@ -110,7 +110,7 @@ export default {
     flex-grow: 1;
 }
 .el-header {
-    z-index: 100;
+    z-index: 1;
     padding: 0;
     position: sticky;
     top: 0px;

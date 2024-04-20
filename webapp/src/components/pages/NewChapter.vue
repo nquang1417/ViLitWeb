@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="js">
 import { pad } from '../../scripts/utils/utils.js'
 import { mapActions, mapGetters } from 'vuex'
 import axios from 'axios'
@@ -7,65 +7,26 @@ export default {
     name: 'NewChapter',
     data() {
         return {
-            chapter: {
-                ChapterId: null,
-                BookId: '',
-                ChapterTitle: '',
-                ChapterNum: 0,
-                FileName: '',
-                Images: null,
-                Url: '',
-                Views: 0,
-                Comments: 0,
-                Likes: 0,
-                Status: '0',
-                CreateDate: '',
-                CreateBy: '',
-                UpdateDate: '',
-                UpdateBy: ''
-            },
+            chapter: {},
             novel: this.getNovel,
             chapterContent: '',
             minChapterNum: 0,
             chapterFileContent: '',
             fileList: [],
+            
         }
     },
     props: ['novelTitle', 'chapterId'],
     mounted() {
         if (this.$route.name === 'EditChapter') {
             this.loadChapter()
-
         } else {
-            this.minChapterNum = this.getNovel.Chapters + 1
-            this.chapter.ChapterNum = this.getNovel.Chapters + 1
-            this.chapter.ChapterTitle = `Chương ${this.getNovel.Chapters + 1}`
-            this.chapter.BookId = `${this.getNovel.BookId}`
-            this.chapter.FileName = `${pad(this.chapter.ChapterNum, 5)}.txt`
-            this.chapter.Url = `${this.getNovel.Url}`
-            this.chapter.CreateBy = `${this.gettersAuthData.userId}`
-            this.chapter.UpdateBy = `${this.gettersAuthData.userId}`
+            this.getNewChapter()
         }
     },
     watch: {
         $route(to, from) {
-            this.chapter = {
-                ChapterId: null,
-                BookId: '',
-                ChapterTitle: '',
-                ChapterNum: 0,
-                FileName: '',
-                Images: null,
-                Url: '',
-                Views: 0,
-                Comments: 0,
-                Likes: 0,
-                Status: '0',
-                CreateDate: '',
-                CreateBy: '',
-                UpdateDate: '',
-                UpdateBy: ''
-            }
+            this.chapter = {}
             this.chapterContent = ''
             this.fileList = []
         }
@@ -77,12 +38,33 @@ export default {
         }),
         ...mapGetters('auth', {
             gettersAuthData: 'getAuthData',
-        })
+        }),
+        uploadHeaders() {
+            var header = {
+                'access_token': `${this.gettersAuthData.token}`
+            }
+            return header
+        }
     },
     methods: {
         ...mapActions('novel', {
             saveNovel: 'updateNovel'
         }),
+        async getNewChapter() {
+            var url = `http://localhost:10454/api/BookChapters/new-chapter?bookId=${this.getNovel.bookId}`
+            console.log(this.gettersAuthData.token)
+            await axios.get(url, {
+                headers: {
+                    'access_token': `${this.gettersAuthData.token}`
+                }
+            }).then(response => {
+                    this.chapter = response.data
+                    this.chapter.createBy = this.gettersAuthData.userId
+                    this.chapter.updateBy = this.gettersAuthData.userId
+            }).catch(e => {
+                    console.error(e)
+            })
+        },
         async loadChapter() {
             var url = `https://localhost:44367/api/BookChapters/${this.chapterId}`
             await axios.get(url)
@@ -156,6 +138,7 @@ export default {
             }
 
         },
+        // hàm này đang bị sai logic
         async updateNovel() {
             var url = `https://localhost:44367/api/BookInfo/update`
             await axios.put(url, this.novelDetails, {
@@ -170,15 +153,11 @@ export default {
         },
         beforeUpload(rawFile) {
             // this.coverUrl = URL.createObjectURL(rawFile.raw);
-            
-            this.chapter.FileName = rawFile.name
+            // trước khi upload file txt thì sẽ gọi api để lưu thông tin chương mới trước
             if (rawFile.type !== 'text/plain') {
                 this.$message.error('Phải là định dạng .txt!');
                 return false;
-            } else if (rawFile.size / 1024 / 1024 > 2) {
-                this.$message.error('Kích thước không được lớn hơn 2MB!');
-                return false;
-            }
+            } 
             return true;
         },
         handleSuccess(response, uploadFile) {
@@ -202,23 +181,19 @@ export default {
 
             <el-form :model="this.chapter" label-width="100px" label-position="left" :rules="this.rules" status-icon>
                 <el-form-item label="Tên truyên">
-                    <div>{{ this.getNovel.BookTitle }}</div>
+                    <div>{{ this.getNovel.bookTitle }}</div>
                 </el-form-item>
-                <el-form-item label="Tiêu đề" prop="ChapterTitle">
-                    <el-input v-model="this.chapter.ChapterTitle" />
+                <el-form-item label="Tiêu đề" prop="chapterTitle">
+                    <el-input v-model="this.chapter.chapterTitle" />
                 </el-form-item>
-                <el-form-item label="Chương" prop="ChapterNum">
-                    <el-input-number v-model="this.chapter.ChapterNum" :min="minChapterNum" controls-position="right"
-                        style="width:100px" />
-                </el-form-item>
-                <el-form-item>
+                <!-- <el-form-item>
                     <el-upload v-model:file-list="fileList" class="upload-demo"
-                        :action="`https://localhost:44367/api/Uploader/add-chapter?bookTitle=${this.getNovel.BookTitle}`"
+                        :action="`http://localhost:10454/api/BookChapters/upload-chapter?chapterId=${this.chapter.chapterId}`"
+                        :headers="uploadHeaders"
                         :before-upload="beforeUpload" :on-success="handleSuccess">
                         <el-button type="primary">Click to upload</el-button>
-
                     </el-upload>
-                </el-form-item>
+                </el-form-item> -->
             </el-form>
         </template>
         <el-container class="editor">

@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="js">
 import axios from 'axios'
 import { pad } from '../../scripts/utils/utils.js'
 import { mapActions, mapGetters } from 'vuex'
@@ -7,11 +7,7 @@ export default {
     name: 'ReadingPage',
     data() {
         return {
-            chapters: [] as {
-                ChapterId: String,
-                ChapterTitle: String,
-                ChapterNum: Number
-            }[],
+            chapters: [],
             dynamicStyle: {
                 fontSize: 16,
                 textAlign: 'justify',
@@ -56,7 +52,7 @@ export default {
             getChapter: 'getChapterInfo'
         })
     },
-    props: ['title', 'chapterTitle'],
+    props: ['title', 'chapterId', 'chapterNo'],
     watch: {
         $route(to, from) {
             this.loadChapter()
@@ -68,24 +64,24 @@ export default {
             updateChapter: 'updateChapter'
         }),
         async loadChapter() {
-            var id = this.getChapter.ChapterId
+            var id = this.getChapter.chapterId
             console.log(id)
-            // var url = `https://localhost:44367/api/BookChapters/${this.chapterId}`
-            var url = `https://localhost:44367/api/BookChapters/${id}`
+            
+            var url = `http://localhost:10454/api/BookChapters/get-chapter?chapterId=${id}`
             await axios.get(url)
                 .then(response => {
-                    this.chapter = response.data.Chapter
-                    this.chapterContent = response.data.File
-                    this.currentChapter.key = response.data.Chapter.ChapterId
-                    this.currentChapter.value = response.data.Chapter.ChapterNum
-                    this.currentChapter.label = response.data.Chapter.ChapterTitle
+                    this.chapter = response.data.chapter
+                    this.chapterContent = response.data.file
+                    this.currentChapter.key = response.data.chapter.chapterId
+                    this.currentChapter.value = response.data.chapter.chapterNum
+                    this.currentChapter.label = response.data.chapter.chapterTitle
                     this.prev = this.currentChapter.value - 1
                     this.next = this.currentChapter.value + 1
                 })
                 .catch(e => {
                     console.error(e)
                 })
-            var decodedContent = atob(this.chapterContent.FileContents)
+            var decodedContent = atob(this.chapterContent.fileContents)
             var utf8decoder = new TextDecoder('utf-8')
             var text = utf8decoder.decode(new Uint8Array([...decodedContent].map(char => char.charCodeAt(0))))
             this.chapterContent.FileContents = text
@@ -102,13 +98,13 @@ export default {
             //     value: i + 1,
             //     label: `Chương ${i + 1}`
             // }))
-            var url = `https://localhost:44367/api/BookChapters/novel/${this.novel.BookId}/all`
+            var url = `http://localhost:10454/api/BookChapters/all-summary?bookId=${this.getNovel.bookId}`
             await axios.get(url)
                 .then(response => {
                     this.chapters = response.data.map(chapter => ({
-                        key: chapter.ChapterId,
-                        value: chapter.ChapterNum,
-                        label: chapter.ChapterTitle
+                        key: chapter.chapterId,
+                        value: chapter.chapterNum,
+                        label: chapter.chapterTitle
                     }))
                 })
                 .catch(error => {
@@ -116,29 +112,28 @@ export default {
                 })
         },
         selectChapter(value) {
-            var chapterId = `${this.novel.BookId}-${pad(value, 5)}`
+            var chapter = this.chapters.find(chapter => chapter.value == value)
             var chapTitle = `Chuong-${value}`
             var url = `/${this.title}/${chapTitle}`
-            console.log(url)
-            this.updateChapter({ ChapterId: chapterId, ChapterTitle: chapTitle, ChapterNum: value })
+            this.updateChapter({ chapterId: chapter.key, chapterTitle: chapTitle, chapterNum: value })
             this.$router.push(url);
         },
         nextChapter() {
             var value = this.currentChapter.value + 1
-            var chapterId = `${this.novel.BookId}-${pad(value, 5)}`
+            var chapter = this.chapters.find(chapter => chapter.value == value)
             var chapTitle = `Chuong-${value}`
             var url = `/${this.title}/${chapTitle}`
             console.log(url)
-            this.updateChapter({ ChapterId: chapterId, ChapterTitle: chapTitle, ChapterNum: value })
+            this.updateChapter({ chapterId: chapter.key, chapterTitle: chapTitle, chapterNum: value })
             this.$router.push(url);
         },
         prevChapter() {
             var value = this.currentChapter.value - 1
-            var chapterId = `${this.novel.BookId}-${pad(value, 5)}`
+            var chapter = this.chapters.find(chapter => chapter.value == value)
             var chapTitle = `Chuong-${value}`
             var url = `/${this.title}/${chapTitle}`
             console.log(url)
-            this.updateChapter({ ChapterId: chapterId, ChapterTitle: chapTitle, ChapterNum: value })
+            this.updateChapter({ chapterId: chapter.key, chapterTitle: chapTitle, chapterNum: value })
             this.$router.push(url);
         }
 

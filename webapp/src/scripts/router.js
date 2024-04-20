@@ -46,7 +46,8 @@ const routes = [
         meta: { requiredAuth: true }
     },
     {
-        path: '/dashboard/:novelTitle/edit-chapter/:chapterId',
+        fullpath: '/dashboard/edit-chapter/:chapterId/:chapterNo',
+        path: '/dashboard/edit-chapter/Chuong-:chapterNo',
         name: 'EditChapter',
         component: NewChapter,
         meta: { requiredAuth: true },
@@ -74,11 +75,12 @@ const routes = [
     },
     { path: '/novel/:novelId', name: 'NovelDetails', component: NovelDetails, },
     {
-        path: '/:title/:chapterTitle',
+        path: '/:title/:chapterTitle/',
         name: 'ReadingPage',
         component: ReadingPage,
         props: true,
     },
+    {path: '/test '}
 
 ]
 

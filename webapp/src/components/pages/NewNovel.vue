@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="js">
 import { ElNotification } from 'element-plus'
 import axios from 'axios'
 import { mapActions, mapGetters } from 'vuex';
@@ -18,37 +18,23 @@ export default {
             },
             genres: [],
             tags: [],
-            novelDetails: {
-                BookTitle: '',
-                GenreId: '',
-                Description: '',
-                BookCover: '',
-                AuthorName: '',
-                UploaderId: '',
-                Chapters: 0,
-                LanguagueCode: 1,
-                LanguageName: 'vi',
-                // tags: ref(),
-                Status: '1',
-                CreateBy: '',
-                UpdateBy: '',
-            },
+            novelDetails: {},
             rules: {
-                BookTitle: [
+                bookTitle: [
                     { required: true, message: 'Điền tiêu đề của tác phẩm', trigger: 'blur' },
                     // { max: 150, message: 'Độ dài tối đa 200 ký tự', trigger: 'blur' }
                 ],
-                AuthorName: [
+                authorName: [
                     { required: true, message: 'Điền tên hoặc bút danh của tác giả', trigger: 'blur' },
                 ],
-                GenreId: [
+                genreId: [
                     { required: true, message: 'Chọn thể loại của tác phẩm', trigger: 'change' },
                 ]
             },
             coverFile: null,
             coverUrl: '',
             previousRoute: '',
-            uploadUrl: `https://localhost:44367/api/Uploader/novel-cover`,
+            uploadUrl: `http://localhost:10454/api/BookInfo/upload-cover`,
         }
     },
     beforeRouteLeave(to, from, next) {
@@ -58,48 +44,37 @@ export default {
     },
     mounted() {
         this.loadGenres()
-        this.novelDetails.UploaderId = this.gettersAuthData.userId
-        this.novelDetails.CreateBy = this.gettersAuthData.userId
-        this.novelDetails.UpdateBy = this.gettersAuthData.userId
-        // console.log(this.$route.name === 'EditNovel')
+        
         if (this.$route.name === 'EditNovel') {
             this.loadNovel()
         }
-        console.log(this.uploadUrl)
     },
     props: ['novelId'],
     computed: {
         ...mapGetters('auth', {
             gettersAuthData: 'getAuthData',
         }),
-        bookTitle() {
-            return this.novelDetails.BookTitle
-        }
     },
     watch: {
         $route(to, from) {
             this.novelDetails = {
-                BookTitle: '',
-                GenreId: '',
-                Description: '',
-                BookCover: '',
-                AuthorName: '',
-                UploaderId: '',
-                Chapters: 0,
-                LanguagueCode: 1,
-                LanguageName: 'vi',
+                bookTitle: '',
+                genreId: '',
+                description: '',
+                bookCover: '',
+                authorName: '',
+                uploaderId: '',
+                chapters: 0,
+                languagueCode: 1,
+                languageName: 'vi',
                 // tags: ref(),
-                Status: '1',
-                CreateBy: '',
-                UpdateBy: '',
+                status: '1',
+                createBy: '',
+                updateBy: '',
             }
             this.coverUrl = ''
             this.previousRoute = from.path
         },
-        bookTitle(value) {
-            this.uploadUrl = `https://localhost:44367/api/Uploader/novel-cover?bookTitle=${value}`
-            // console.log(this.uploadUrl)
-        }
     },
     methods: {
         ...mapActions('novel', {
@@ -114,25 +89,24 @@ export default {
                         'Content-Type': 'application/json-patch+json'
                     }
                 })
-                // this.uploadCover()
-                // console.log(this.$refs.upload)
-                // this.$refs.upload.submit()
             } catch (error) {
                 console.error(error)
             }
         },
         async submit() {
             try {
+                this.novelDetails.uploaderId = this.gettersAuthData.userId
+                this.novelDetails.createBy = this.gettersAuthData.userId
+                this.novelDetails.updateBy = this.gettersAuthData.userId
 
-                var url = `https://localhost:44367/api/BookInfo/add`
-                var respone = await axios.post(url, this.novelDetails, {
+                var url = `http://localhost:10454/api/BookInfo/add`
+                var response = await axios.post(url, this.novelDetails, {
                     headers: {
                         'Content-Type': 'application/json-patch+json'
                     }
                 })
-                // this.uploadCover()
-                // console.log(this.$refs.upload)
-                // this.$refs.upload.submit()
+                this.saveNovel(response.data)
+                this.$router.push(`/dashboard/workspace/${response.data.bookId}`)
             } catch (error) {
                 console.error(error)
             }
@@ -149,8 +123,8 @@ export default {
                             message: 'Đăng tải thành công!',
                             type: 'success',
                         })
-                        //this.submit()
-                        this.uploadCover()
+                        this.submit()
+                        
                     }
                     if (this.$route.name === 'EditNovel') {
                         ElNotification({
@@ -159,7 +133,6 @@ export default {
                             type: 'success',
                         })
                         this.update()
-                        this.uploadCover()
                         this.$router.back()
                     }
                 } else {
@@ -171,24 +144,7 @@ export default {
                 }
             })
         },
-        async uploadCover() {
-            var url = `https://localhost:44367/api/Uploader/novel-cover?bookTitle=${this.novelDetails.BookTitle}`
         
-            var formData = new FormData()
-            formData.append("file", this.coverFile)
-            try {
-                const response = await axios.post(url, formData, {
-                    headers: {
-                        "Content-Type": "multipart/form-data"
-                    }
-                })
-            } catch (error) {
-                console.error(error)
-            }
-        },
-        triggerFileInput() {
-            this.$refs.fileInput.click();
-        },
         async handleFileUpload(file) {
             // this.coverFile = this.$refs.fileInput.files[0];
             
@@ -206,13 +162,13 @@ export default {
                     }
                 })
                 // this.coverUrl = response.data.image.url
-                this.novelDetails.BookCover = response.data.image.url
+                this.novelDetails.bookCover = response.data.image.url
             } catch (error) {
                 console.error(error)
             }
         },
         async loadGenres() {
-            var url = `https://localhost:44367/api/genres`;
+            var url = `http://localhost:10454/api/Genres/lists`;
             await axios.get(url)
                 .then(response => {
                     this.genres = response.data;
@@ -222,20 +178,20 @@ export default {
                 })
         },
         async loadNovel() {
-            var url = `https://localhost:44367/api/BookInfo/${this.novelId}`
+            var url = `http://localhost:10454/api/BookInfo/details?bookId=${this.novelId}`
             await axios.get(url)
                 .then(response => {
-                    this.novelDetails = JSON.parse(JSON.stringify(response.data.BookInfo))
+                    this.novelDetails = JSON.parse(JSON.stringify(response.data))
                 })
                 .catch(e => {
                     console.error(e);
                 })
-            this.coverUrl = this.novelDetails.BookCover
+            this.coverUrl = this.novelDetails.bookCover
 
         },
         beforeUpload(rawFile) {
             // this.coverUrl = URL.createObjectURL(rawFile.raw);
-            this.handleFileUpload(rawFile)
+            //this.handleFileUpload(rawFile)
             this.coverFile = rawFile
             if (rawFile.type !== 'image/jpeg') {
                 this.$message.error('Định dạng ảnh bìa phải là jpg!');
@@ -247,8 +203,8 @@ export default {
             return true;
         },
         handleSuccess(response, uploadFile) {
-            console.log(uploadFile)
-            this.coverUrl = URL.createObjectURL(uploadFile.raw!);
+            this.novelDetails.bookCover = response.data.image.url
+            this.coverUrl = response.data.thumb.url;
         },
     }
 }
@@ -273,34 +229,27 @@ export default {
                             <el-icon v-else class="cover-uploader-icon">
                                 <Plus />
                             </el-icon>
-                        </el-upload>
-                        <!-- <label for="fileInput" class="picture-class" @click="triggerFileInput">
-                            <img v-if="coverFile || coverUrl" :src="coverUrl" alt="" width="148" height="148">
-                            <el-icon v-else>
-                                <Plus />
-                            </el-icon>
-                        </label>
-                        <input type="file" ref="fileInput" style="display: none;" @change="handleFileUpload" /> -->
+                        </el-upload>                        
                     </el-form-item>
-                    <el-form-item label="Tiêu đề" prop="BookTitle">
-                        <el-input v-model="this.novelDetails.BookTitle" />
+                    <el-form-item label="Tiêu đề" prop="bookTitle">
+                        <el-input v-model="this.novelDetails.bookTitle" />
                     </el-form-item>
-                    <el-form-item label="Tác giả" prop="AuthorName">
-                        <el-input v-model="this.novelDetails.AuthorName" />
+                    <el-form-item label="Tác giả" prop="authorName">
+                        <el-input v-model="this.novelDetails.authorName" />
                     </el-form-item>
-                    <el-form-item label="Tóm tắt" prop="Description">
+                    <el-form-item label="Tóm tắt" prop="description">
                         <!-- <el-input type="textarea" :autosize="{ minRows: 4, maxRows: 10 }"
-                            v-model="this.novelDetails.Description" /> -->
+                            v-model="this.novelDetails.description" /> -->
                         <div class="editor">
-                            <quill-editor toolbar="essential" v-model:content="this.novelDetails.Description"
+                            <quill-editor toolbar="essential" v-model:content="this.novelDetails.description"
                                 contentType="text"></quill-editor>
                         </div>
 
                     </el-form-item>
-                    <el-form-item label="Thể loại" prop="GenreId">
-                        <el-select v-model="this.novelDetails.GenreId" class="m-2" placeholder="Chọn thể loại">
-                            <el-option v-for="genre in this.genres" :key="genre.GenreId" :label="genre.GenreName"
-                                :value="genre.GenreId"></el-option>
+                    <el-form-item label="Thể loại" prop="genreId">
+                        <el-select v-model="this.novelDetails.genreId" class="m-2" placeholder="Chọn thể loại">
+                            <el-option v-for="genre in this.genres" :key="genre.genreId" :label="genre.genreName"
+                                :value="genre.genreId"></el-option>
                         </el-select>
                     </el-form-item>
                     <el-form-item label="Tags">
@@ -310,7 +259,7 @@ export default {
                         </el-checkbox-group>
                     </el-form-item>
                     <el-form-item label="Trạng thái">
-                        <el-select v-model="this.novelDetails.Status" class="m-2" placeholder="Trạng thái">
+                        <el-select v-model="this.novelDetails.status" class="m-2" placeholder="Trạng thái">
                             <el-option label="Đang tiến hành" value="1"></el-option>
                             <el-option label="Hoàn thành" value="2"></el-option>
                             <el-option label="Tạm ngưng" value="0"></el-option>

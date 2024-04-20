@@ -1,9 +1,9 @@
-<script lang="ts">
+<script lang="js">
 import { ref } from 'vue'
 import axios from 'axios'
 import dayjs from "dayjs"
 import { mapActions, mapGetters } from 'vuex'
-import type { Column } from 'element-plus'
+
 
 export default {
     name: 'NovelManagement',
@@ -21,7 +21,7 @@ export default {
     },
     mounted() {
         this.loading = true
-        this.loadNovel(0, 20, true)
+        this.loadNovel(1)
 
     },
     computed: {
@@ -35,33 +35,35 @@ export default {
         })
     },
     methods: {
-        handleRowClick(row) {
-            console.log(row)
-            // var url = `/${this.novel.BookId}/${novelName}/${chaatperId}/${chapterTitle}`
-            // var url = `/${novelName}/${chapterTitle}`
-            // this.selectChapter({ChapterId: row.ChapterId, ChapterTitle: row.ChapterTitle, ChapterNum: row.ChapterNum})
-            // this.$router.push(url);
-            this.$router.push(`/dashboard/workspace/${row.BookId}`)
+        handleRowClick(row, col) {
+            if (col.no != 4) {
+                this.$router.push(`/dashboard/workspace/${row.bookId}`)
+            }
         },
         handleEdit(index, row) {
-            this.$router.push(`/dashboard/edit-novel/${row.BookId}`)
+            this.$router.push(`/dashboard/edit-novel/${row.bookId}`)
         },
-        handleDelete(index, row) {
-            console.log(index, row)
+        async handleDelete(index, row) {
+            var url = `http://localhost:10454/api/BookInfo/delete?bookId=${row.bookId}`
+            await axios.delete(url)
+                .then()
+                .catch(e => {
+                    console.error(e)
+                })
         },
-        async loadNovel(page, pageSize, asc) {
+        async loadNovel(page) {
 
-            var params = `uploaderId=${this.getUser.userId}&page=${page}&pageSize=${pageSize}&asc=${asc}`
-            var url = `https://localhost:44367/api/BookInfo/filterUploader?${params}`
+            var params = `uploaderId=${this.getUser.userId}&page=${page}`
+            var url = `http://localhost:10454/api/BookInfo/filter-by-uploader?${params}`
             await axios
                 .get(url)
                 .then(response => {
-                    this.novels = JSON.parse(JSON.stringify(response.data.Items.map(item => {
-                        item.UpdateDate = dayjs(item.UpdateDate).format("DD/MM/YYYY HH:mm:ss");
-                        item.CreateDate = dayjs(item.CreateDate).format("DD/MM/YYYY HH:mm:ss");
+                    this.novels = JSON.parse(JSON.stringify(response.data.map(item => {
+                        item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm:ss");
+                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm:ss");
                         return item;
                     })));
-                    this.totalItems = response.data.TotalItem
+                    this.totalItems = response.data.length
                 })
                 .catch(e => {
                     console.error(e)
@@ -81,26 +83,19 @@ export default {
             </div>
             <div class="panel-body">
                 <el-table v-loading="loading" :data="filterTableData" style="width: 100%" @row-click="handleRowClick">
-                    <!-- <el-table-column width="50">
-                        <template #default="scope">
-                            <div style="display: flex; align-items: center">
-                                <el-image :src="scope.row.BookCover" :fit="'scale-down'" style="height: 50px; width: 50px"/>
-                            </div>
-                        </template>
-                    </el-table-column> -->
-                    <el-table-column label="Tên truyện" prop="BookTitle" />
-                    <el-table-column label="Tác giả" prop="AuthorName" />
+                    
+                    <el-table-column label="Tên truyện" prop="bookTitle" />
+                    <el-table-column label="Tác giả" prop="authorName" />
                     <el-table-column label="Trạng thái">
                         <template #default="scope">
-                            <el-select v-model="scope.row.Status" class="m-2">
-                                
-                                <el-option label="Đang tiến hành" value="1"></el-option>
-                                <el-option label="Hoàn thành" value="2"></el-option>
-                                <el-option label="Tạm ngưng" value="0"></el-option>
+                            <el-select v-model="scope.row.status" class="m-2">                                
+                                <el-option label="Đang tiến hành" :value=1></el-option>
+                                <el-option label="Hoàn thành" :value=2></el-option>
+                                <el-option label="Tạm ngưng" :value=0></el-option>
                             </el-select>
                         </template>
                     </el-table-column>
-                    <el-table-column label="Ngày cập nhật" prop="UpdateDate" />
+                    <el-table-column label="Ngày cập nhật" prop="updateDate" />
                     <el-table-column :align="'right'">
                         <template #header>
                             <el-input v-model="search" size="small" placeholder="Tìm kiếm tên truyện" />

@@ -8,6 +8,7 @@ using ViL.Data.Models;
 using ViL.Data.Repositories;
 using ViL.Data.Views;
 using ViL.Services.Infrastructure;
+using System.Linq.Expressions;
 
 namespace ViL.Services.Services
 {
@@ -27,6 +28,28 @@ namespace ViL.Services.Services
             _bookStatisticsInfoRepository = bookStatisticRepo;
             _genresRepository = genresRepo;
             _usersRepository = userRepo;
+        }
+
+        public override void Add(BookInfo entity)
+        {
+            base.Add(entity);
+            _bookStatisticsInfoRepository.Add(new BookStatisticsInfo(entity.BookId));
+        }
+
+        public override void Delete(BookInfo entity)
+        {
+            base.Delete(entity);
+            _bookStatisticsInfoRepository.Delete(stats => stats.BookId == entity.BookId);
+        }
+
+        public override void Delete(Expression<Func<BookInfo, bool>> where)
+        {
+            base.Delete(where);
+            Expression<Func<BookStatisticsInfo, bool>> statWhere = stat => where.Compile().Invoke(new BookInfo
+            {
+                BookId = stat.BookId
+            });
+            _bookStatisticsInfoRepository.Delete(statWhere);
         }
 
         public IQueryable<BookDetailsDTO> GetAllDetails()

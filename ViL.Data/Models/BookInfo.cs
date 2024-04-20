@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Net;
 
 namespace ViL.Data.Models
 {
@@ -27,6 +29,13 @@ namespace ViL.Data.Models
             BookTitle = string.Empty;
             GenreId = string.Empty;
             UploaderId = string.Empty;
+            Description = string.Empty;
+            AuthorName = string.Empty;
+            BookCover = string.Empty;
+            Chapters = 0;
+            LanguageCode = 0;
+            LanguageName = string.Empty;
+            Url = BookId;
         }
 
         public BookInfo(string bookTitle, string genreId, string uploaderId) : base()
@@ -40,8 +49,8 @@ namespace ViL.Data.Models
             BookCover = string.Empty;
             Chapters = 0;
             LanguageCode = 0;
-            LanguageName = string.Empty;
-            Url = BookId;
+            LanguageName = "vi";
+            Url = $"..\\Data\\{BookId}";
         }
     }
 }

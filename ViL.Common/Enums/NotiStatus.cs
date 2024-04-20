@@ -8,4 +8,13 @@
         Pending = 3,
         Alert = 4,
     }
+
+    public enum NotiType
+    {
+        Unknown = 0,
+        Success = 1,
+        Failure = 2,
+        Warning = 3,
+        Info = 4,
+    }
 }

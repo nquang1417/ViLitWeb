@@ -35,3 +35,16 @@ export function getRemainingTime(datetime) {
     }
     return `${remainingTime.seconds.toString()} giây`;
 }
+
+export function getBookStatusStr(status) {
+    switch (status) {
+        case 0: 
+            return "Tạm ngưng"
+        case 1: 
+            return "Đang tiến hành"
+        case 2: 
+            return "Hoàn thành"
+        default:
+            return "Unknown"
+    }
+}

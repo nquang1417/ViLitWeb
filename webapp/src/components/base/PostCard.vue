@@ -14,17 +14,29 @@
     </el-card>
 </template>
   
-<script lang="ts">
+<script >
 
 export default {
     name: 'PostCard',
+    data() {
+        return {
+            coverUrl: {}
+        }
+    },
     props: {
         cover: {
             type: String,
             default: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
         },
         title: String,
-        novelId: String
+        novelId: String,
+    },
+    computed: {
+        imageUrl() {
+            const relativePath = this.cover.replace(/\\/g, '/')
+            console.log(relativePath)
+            return require(`../${relativePath}`)
+        }
     },
     methods: {
         viewDetail() {

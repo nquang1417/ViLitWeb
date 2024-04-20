@@ -1,52 +1,17 @@
-<script lang="ts">
+<script lang="js">
 import axios from 'axios'
 import dayjs from "dayjs"
 import { mapActions, mapGetters } from 'vuex'
-import { getRemainingTime } from '../../scripts/utils/utils'
-import type { TabsPaneContext } from 'element-plus'
-import { ref } from 'vue'
+import { getRemainingTime, getBookStatusStr } from '../../scripts/utils/utils'
 
 export default {
     name: 'NovelWorkspace',
     data() {
         return {
-            novel: {} as {
-                BookId: String,
-                BookTitle: String,
-                GenreId: String,
-                GenreName: String,
-                Description: String,
-                BookCover: String,
-                CoverUrl: String,
-                AuthorName: String,
-                UploaderId: String,
-                Chapters: Number,
-                LanguageCode: Number,
-                LanguageName: String,
-                Url: String,
-                Views: Number,
-                Followers: Number,
-                Reviews: Number,
-                Comments: Number,
-                AverageRating: Number,
-                Status: String,
-                CreateDate: String,
-                CreateBy: String,
-                UpdateDate: String,
-                UpdateBy: String
-            },
-            chapters: [] as {
-                ChapterId: String,
-                ChapterTitle: String
-            }[],
-            drafts: [] as {
-                ChapterId: String,
-                ChapterTitle: String
-            }[],
-            trashs: [] as {
-                ChapterId: String,
-                ChapterTitle: String
-            }[],
+            novel: {},
+            chapters: [],
+            drafts: [],
+            trashs: [],
             chapterCurrentPage: 1,
             draftsCurrentPage: 1,
             trashcurrentPage: 1,
@@ -57,21 +22,27 @@ export default {
             // totalPage: 10,
             totalItems: 0,
             lastUpdate: '',
+            novelStatus: '',
             activeName: 'drafts',
             dialogFormVisible: false,
             loading: false,
-            isEdited: false
+            isEdited: false,
+            rowHover: false,
 
         }
     },
     mounted() {
         this.loadNovel()
-        this.loadDrafts(0)
+        this.loadDrafts(1)
     },
     props: ['novelId'],
     computed: {
         ...mapGetters('novel', {
             getNovel: 'getNovelInfo'
+        }),
+        ...mapGetters('auth', {
+            getterLoginStatus: 'getLoginStatus',
+            gettersAuthData: 'getAuthData'
         })
     },
     watch: {
@@ -82,11 +53,11 @@ export default {
             selectChapter: 'updateChapter'
         }),
         async loadNovel() {
-            var url = `https://localhost:44367/api/BookInfo/${this.novelId}`
+            var url = `http://localhost:10454/api/BookInfo/details?bookId=${this.novelId}`
             await axios.get(url)
                 .then(response => {
-                    this.novel = JSON.parse(JSON.stringify(response.data.BookInfo))
-                    this.totalItems = this.novel.Chapters
+                    this.novel = JSON.parse(JSON.stringify(response.data))
+                    this.totalItems = this.novel.chapters
                     // var decodedContent = atob(this.novel.Cover.FileContents);
 
                     // Convert decoded content to a Uint8Array
@@ -105,58 +76,50 @@ export default {
                 .catch(e => {
                     console.error(e);
                 })
-            this.lastUpdate = getRemainingTime(this.novel.UpdateDate)
-            switch (this.novel.Status) {
-                case '0':
-                    this.novel.Status = "Tạm ngưng"
-                    break;
-                case '1':
-                    this.novel.Status = "Đang tiến hành"
-                    break;
-                case '2':
-                    this.novel.Status = "Hoàn thành"
-                    break;
-            }
-            this.novel.CoverUrl = this.novel.BookCover
+            this.lastUpdate = getRemainingTime(this.novel.updateDate)
+            this.novelStatus = getBookStatusStr(this.novel.status)
+            this.novel.CoverUrl = this.novel.bookCover
             this.saveNovel(this.novel)
         },
-        async loadChapters(page, pageSize) {
+        async loadChapters(page) {
             this.loading = true
-            var url = `https://localhost:44367/api/BookChapters/novel/${this.novelId}/chapters?page=${page}`
+            var url = `http://localhost:10454/api/BookChapters/get-chapters?bookId=${this.novelId}&page=${page}`
             await axios.get(url)
                 .then(response => {
-                    this.chapters = JSON.parse(JSON.stringify(response.data.Items.map(item => {
-                        item.UpdateDate = dayjs(item.UpdateDate).format("DD/MM/YYYY HH:mm");
-                        item.CreateDate = dayjs(item.CreateDate).format("DD/MM/YYYY HH:mm");
+                    this.chapters = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                        item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
+                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
                         return item;
                     })));
-                    this.totalChapters = response.data.TotalItem
+                    this.totalChapters = response.data.totals
                 })
                 .catch(e => {
                     console.error(e);
                 })
             this.loading = false
         },
-        async loadDrafts(page, pageSize) {
+        async loadDrafts(page) {
             this.loading = true
-            var url = `https://localhost:44367/api/BookChapters/novel/${this.novelId}/drafts?page=${page}`
-            await axios.get(url)
-                .then(response => {
-                    this.drafts = JSON.parse(JSON.stringify(response.data.Items.map(item => {
-                        item.UpdateDate = dayjs(item.UpdateDate).format("DD/MM/YYYY HH:mm");
-                        item.CreateDate = dayjs(item.CreateDate).format("DD/MM/YYYY HH:mm");
-                        return item;
-                    })));
-                    this.totalDrafts = response.data.TotalItem
-                })
-                .catch(e => {
+            var url = `http://localhost:10454/api/BookChapters/get-drafts?bookId=${this.novelId}&page=${page}`
+            await axios.get(url, {
+                headers: {
+                    'access_token': `${this.gettersAuthData.token}`
+                }
+            }).then(response => {
+                this.drafts = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                    item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
+                    item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
+                    return item;
+                })));
+                this.totalDrafts = response.data.totals
+            }).catch(e => {
                     console.error(e);
-                })
+            })
             this.loading = false
         },
         async update() {
             try {
-                var url = `https://localhost:44367/api/BookInfo/update`
+                var url = `http://localhost:10454/api/BookInfo/update?bookId=${this.novel.bookId}`
                 var respone = await axios.put(url, this.novel, {
                     headers: {
                         'Content-Type': 'application/json-patch+json'
@@ -167,28 +130,25 @@ export default {
                 console.error(error)
             }
         },
-        async changeStatus(entity,status) {
-            var url = `https://localhost:44367/api/BookChapters/ChangeStatus?status=${status}`
-                await axios.put(url, entity, {
-                    headers: {
-                        'Content-Type': 'application/json-patch+json'
-                    }
-                }).then(response => {
-                    
+        async changeStatus(entity, status) {
+            var url = `http://localhost:10454/api/BookChapters/change-status?chapterId=${entity.chapterId}&status=${status}`
+            await axios.put(url)
+                .then(response => {
+
                 })
-                    .catch(error => {
-                        console.log(error)
-                    })
+                .catch(error => {
+                    console.log(error)
+                })
         },
         //==== Pagination Publish tab
         handleChapterChange(val) {
-            this.loadChapters(val - 1)
+            this.loadChapters(val)
         },
         handleChapterRowClick(row) {
             console.log(row.ChapterId)
             var novelName = this.novel.Url.replaceAll(' ', '-')
             var url = `/dashboard/${novelName}/edit-chapter/${row.ChapterId}`
-            this.selectChapter({ ChapterId: row.ChapterId, ChapterTitle: row.ChapterTitle, ChapterNum: row.ChapterNum })
+            this.selectChapter({ chapterId: row.ChapterId, chapterTitle: row.ChapterTitle, chapterNum: row.ChapterNum })
             this.$router.push(url);
         },
         handleChapterEdit(index, row) {
@@ -201,7 +161,7 @@ export default {
         //====
         //==== Pagination Drafts tab
         handleDraftsChange(val) {
-            this.loadDrafts(val - 1)
+            this.loadDrafts(val)
         },
         handleDraftsRowClick(row) {
             console.log(row.ChapterId)
@@ -221,7 +181,7 @@ export default {
         //====
         //==== Pagination Drafts tab
         handleTrashsChange(val) {
-            this.loadDrafts(val - 1)
+            this.loadDrafts(val)
         },
         handleTrashsRowClick(row) {
             console.log(row.ChapterId)
@@ -239,15 +199,15 @@ export default {
             
         },
         //====
-        handleClick(tab: TabsPaneContext, event: Event) {
+        handleClick(tab, event) {
             console.log(tab.paneName)
             if (tab.paneName === 'publish') {
                 if (this.chapters.length == 0) {
-                    this.loadChapters(0)
+                    this.loadChapters(1)
                 }
             } else if (tab.paneName === 'drafts') {
                 if (this.drafts.length == 0) {
-                    this.loadDrafts(0)
+                    this.loadDrafts(1)
                 }
             }            
         },
@@ -260,11 +220,18 @@ export default {
             this.dialogFormVisible = true
         },
         navigateEdit() {
-            this.$router.push(`/dashboard/edit-novel/${this.novel.BookId}`)
+            this.$router.push(`/dashboard/edit-novel/${this.novel.bookId}`)
         },
         
         newDraft() {
-            this.$router.push(`/dashboard/${this.novel.Url.replaceAll(' ', '-')}/new-chapter`)
+            this.$router.push(`/dashboard/${this.novel.bookTitle}/new-chapter`)
+        },
+
+        mouseEnter(row) {
+            row.hovered = true
+        },
+        mouseLeave(row) {
+            row.hovered = false
         }
     }
 }
@@ -276,7 +243,7 @@ export default {
         <template #dialog>
             <el-dialog v-model="dialogFormVisible" :show-close="false" :show-header="false"
                 :before-close="beforeCloseDialog" close-on-press-escape>
-                <el-input type="textarea" :autosize="{ minRows: 10 }" maxlength="1000" v-model="novel.Description"
+                <el-input type="textarea" :autosize="{ minRows: 10 }" maxlength="1000" v-model="novel.description"
                     show-word-limit>
                 </el-input>
                 <!-- <template #footer>
@@ -299,7 +266,7 @@ export default {
                                 <el-col :span="19" class="flex-col">
                                     <div class="series-info">
                                         <div class="series-title-group">
-                                            <span class="series-title">{{ novel.BookTitle }}</span>
+                                            <span class="series-title">{{ novel.bookTitle }}</span>
                                             <span style="float: right"><el-icon class="edit-icon" @click="navigateEdit">
                                                     <Edit />
                                                 </el-icon></span>
@@ -307,12 +274,12 @@ export default {
 
                                         <span class="info-item">
                                             <span class="info-name">Tác giả </span>
-                                            <span class="info-value">{{ novel.AuthorName }}</span>
+                                            <span class="info-value">{{ novel.authorName }}</span>
                                         </span>
                                         <span class="genre">
                                             <span class="info-name"> / </span>
                                             <span class="info-name"> Thể loại</span>
-                                            <span class="info-value">{{ novel.GenreName }}</span>
+                                            <span class="info-value">{{ novel.genreName }}</span>
                                         </span>
                                     </div>
                                     <div class="description">
@@ -321,35 +288,34 @@ export default {
                                                 <EditPen />
                                             </el-icon>
                                         </div>
-                                        <span style="font-size: 15px;">{{ novel.Description }}</span>
+                                        <span style="font-size: 15px;">{{ novel.description }}</span>
                                     </div>
                                     <div class="statistics">
                                         <el-row justify="space-between" :align="'middle'">
                                             <el-col class="statistics-item" :span="6" :align="'center'"
                                                 @click="console.log('share')">
                                                 <span class="block feature-name">Trạng thái</span>
-                                                <span class="block feature-value font-bold">{{ novel.Status }}</span>
+                                                <span class="block feature-value font-bold">{{ novelStatus }}</span>
                                                 <span class="block feature-value" style="font-size: 14px;">{{
-                                                    novel.Chapters
-                                                }} chương</span>
+                                                    novel.chapters }} chương</span>
                                             </el-col>
                                             <el-col class="statistics-item" :span="6" :align="'center'"
                                                 @click="console.log('follow')">
                                                 <span class="block feature-name">Lần cuối</span>
                                                 <span class="block feature-value font-bold"> {{ this.lastUpdate
-                                                }}</span>
+                                                    }}</span>
                                             </el-col>
                                             <el-col class="statistics-item" :span="6" :align="'center'"
                                                 @click="console.log('navigate to index')">
                                                 <span class="block feature-name">Đánh giá</span>
-                                                <span class="block feature-value font-bold">{{ novel.AverageRating }} /
+                                                <span class="block feature-value font-bold">{{ novel.averageRating }} /
                                                     {{
-                                                        novel.Reviews }}</span>
+                                                    novel.reviews }}</span>
                                             </el-col>
                                             <el-col class="statistics-item" :span="6" :align="'center'"
                                                 @click="console.log('share')">
                                                 <span class="block feature-name">Lượt xem</span>
-                                                <span class="block feature-value font-bold">{{ novel.Views }}</span>
+                                                <span class="block feature-value font-bold">{{ novel.views }}</span>
                                             </el-col>
 
                                         </el-row>
@@ -369,19 +335,20 @@ export default {
                         <el-tab-pane label="Bản nháp" name="drafts">
                             <el-container class="main-item">
                                 <el-main class="chapter-index">
-                                    <el-table :data="drafts" stripe style="width: 100%" :show-header="false" v-loading="loading" 
-                                        @row-click="handleDraftsRowClick">
-                                        <el-table-column prop="ChapterTitle" label="Tiêu đề" :align="'left'"
+                                    <el-table :data="drafts" stripe style="width: 100%" :show-header="false"
+                                        v-loading="loading" @row-click="handleDraftsRowClick" @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave">
+                                        <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column width="200">
-                                            <template #default="scope" class="edit-options">
-                                                <el-button size="small" plain
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'"> 
+                                            <template #default="scope">
+                                                <div class="edit-options" v-if="scope.row.hovered">
+                                                    <el-button size="small" plain
                                                     @click="handleDraftsPublish(scope.$index, scope.row)">Publish</el-button>
                                                 <el-button size="small" type="danger" plain
                                                     @click="handleDraftsDelete(scope.$index, scope.row)">Delete</el-button>
+                                                </div>                                                
                                             </template>
                                         </el-table-column>
-                                        <el-table-column prop="UpdateDate" label="Ngày cập nhật" :align="'right'" />
                                         <template #empty>
                                             <div>Không có bản nháp nào</div>
                                             <el-button type="primary" @click="newDraft">Tạo bản nháp mới</el-button>
@@ -401,17 +368,18 @@ export default {
                             <el-container class="main-item">
                                 <el-main class="chapter-index">
                                     <el-table :data="chapters" stripe style="width: 100%" :show-header="false"
-                                        v-loading="loading" @row-click="handleChapterRowClick">
-                                        <el-table-column prop="ChapterTitle" label="Tiêu đề" :align="'left'"
+                                        v-loading="loading" @row-click="handleChapterRowClick" row-class-name="chapter-row" @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave">
+                                        <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="UpdateDate" label="Ngày cập nhật" :align="'right'">
-                                            <template #default="scope" class="edit-options">
-                                                <el-button size="small" plain
-                                                    @click="handleChapterEdit(scope.$index, scope.row)">Edit</el-button>
-                                                <el-button size="small" type="danger" plain
-                                                    @click="handleChapterDelete(scope.$index, scope.row)">Delete</el-button>
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'">
+                                            <template #default="scope">
+                                                <div class="edit-options" v-if="scope.row.hovered">
+                                                    <el-button size="small" plain
+                                                        @click="handleChapterEdit(scope.$index, scope.row)">Edit</el-button>
+                                                    <el-button size="small" type="danger" plain
+                                                        @click="handleChapterDelete(scope.$index, scope.row)">Delete</el-button>
+                                                </div>
                                             </template>
-
                                         </el-table-column>
                                         <template #empty>
                                             <div>Không có chương nào</div>
@@ -420,8 +388,9 @@ export default {
                                 </el-main>
                                 <el-footer class="pagination" height="40px">
                                     <!-- <el-button>Add</el-button> -->
-                                    <el-pagination v-model:current-page="chapterCurrentPage" v-model:page-size="pageSize"
-                                        :background="true" layout="prev, pager, next, jumper" :total="totalChapters"
+                                    <el-pagination v-model:current-page="chapterCurrentPage"
+                                        v-model:page-size="pageSize" :background="true"
+                                        layout="prev, pager, next, jumper" :total="totalChapters"
                                         @current-change="handleChapterChange" />
                                 </el-footer>
                             </el-container>
@@ -430,10 +399,19 @@ export default {
                         <el-tab-pane label="Thùng rác" name="Trash">
                             <el-container class="main-item">
                                 <el-main class="chapter-index">
-                                    <el-table stripe style="width: 100%" :show-header="false" v-loading="loading">
-                                        <el-table-column prop="ChapterTitle" label="Tiêu đề" :align="'left'"
+                                    <el-table stripe style="width: 100%" :show-header="false" v-loading="loading" @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave">
+                                        <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="UpdateDate" label="Ngày cập nhật" :align="'right'" />
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'">
+                                            <template #default="scope">
+                                                <div class="edit-options" v-if="scope.row.hovered">
+                                                    <el-button size="small" plain
+                                                        @click="handleChapterEdit(scope.$index, scope.row)">Edit</el-button>
+                                                    <el-button size="small" type="danger" plain
+                                                        @click="handleChapterDelete(scope.$index, scope.row)">Delete</el-button>
+                                                </div>
+                                            </template>    
+                                        </el-table-column>
                                         <template #empty>
                                             Thùng rác rỗng
                                         </template>
@@ -441,7 +419,7 @@ export default {
                                 </el-main>
                                 <el-footer class="pagination" height="40px">
                                     <el-pagination v-model:current-page="trashcurrentPage" v-model:page-size="pageSize"
-                                        :background="true" layout="prev, pager, next, jumper" :total="0"
+                                        :background="true" layout="prev, pager, next, jumper" :total="totalTrashs"
                                         @current-change="handleTrashsChange" />
                                 </el-footer>
                             </el-container>
@@ -657,4 +635,5 @@ export default {
     color: #0000006c;
     cursor: pointer;
 }
+
 </style>

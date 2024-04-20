@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="js">
 import axios from 'axios'
 import dayjs from "dayjs"
 import { mapActions, mapGetters } from 'vuex'
@@ -8,37 +8,8 @@ export default {
     name: 'NovelDetails',
     data() {
         return {
-            novel: {} as {
-                BookId: String,
-                BookTitle: String,
-                GenreId: String,
-                GenreName: String,
-                Description: String,
-                BookCover: String,
-                CoverUrl: String,
-                AuthorName: String,
-                UploaderId: String,
-                Username: String,
-                Avatar: String,
-                Chapters: Number,
-                LanguageCode: Number,
-                LanguageName: String,
-                Url: String,
-                Views: Number,
-                Followers: Number,
-                Reviews: Number,
-                Comments: Number,
-                AverageRating: Number,
-                Status: String,
-                CreateDate: String,
-                CreateBy: String,
-                UpdateDate: String,
-                UpdateBy: String
-            },
-            chapters: [] as {
-                ChapterId: String,
-                ChapterTitle: String
-            }[],
+            novel: {},
+            chapters: [],
             reviews: [],
             currentPage: 1,
             pageSize: 20,
@@ -49,7 +20,7 @@ export default {
     },
     created() {
         this.loadNovel()
-        this.loadChapters(0)
+        this.loadChapters(1)
     },
     computed: {
         id() {
@@ -66,12 +37,11 @@ export default {
             selectChapter: 'updateChapter'
         }),
         async loadNovel() {
-            var url = `https://localhost:44367/api/BookInfo/${this.id}`
+            var url = `http://localhost:10454/api/BookInfo/details?bookId=${this.id}`
             await axios.get(url)
                 .then(response => {
-                    this.novel = JSON.parse(JSON.stringify(response.data.BookInfo))
-                    this.reviews = response.data.Reviews
-                    this.totalItems = this.novel.Chapters
+                    this.novel = JSON.parse(JSON.stringify(response.data))
+                    this.totalItems = this.novel.chapters
 
                     // var decodedContent = atob(this.novel.Cover.FileContents);
 
@@ -87,34 +57,34 @@ export default {
                     // Create a data URL for the Blob
 
                     // this.novel.CoverUrl = URL.createObjectURL(blob);
-                    this.novel.CoverUrl = this.novel.BookCover;
+                    this.novel.CoverUrl = this.novel.bookCover;
                     
                 })
                 .catch(e => {
                     console.error(e);
                 })
-            this.lastUpdate = getRemainingTime(this.novel.UpdateDate)
+            this.lastUpdate = getRemainingTime(this.novel.updateDate)
             
-            switch (this.novel.Status) {
+            switch (this.novel.status) {
                 case '0':
-                    this.novel.Status = "Tạm ngưng"
+                    this.novel.status = "Tạm ngưng"
                     break;
                 case '1':
-                    this.novel.Status = "Đang tiến hành"
+                    this.novel.status = "Đang tiến hành"
                     break;
                 case '2':
-                    this.novel.Status = "Hoàn thành"
+                    this.novel.status = "Hoàn thành"
                     break;
             }
             this.saveNovel(this.novel)
         },
-        async loadChapters(page, pageSize) {
-            var url = `https://localhost:44367/api/BookChapters/novel/${this.id}/chapters?page=${page}`
+        async loadChapters(page) {
+            var url = `http://localhost:10454/api/BookChapters/get-chapters?bookId=${this.id}&page=${page}`
             await axios.get(url)
                 .then(response => {
-                    this.chapters = JSON.parse(JSON.stringify(response.data.Items.map(item => {
-                        item.UpdateDate = dayjs(item.UpdateDate).format("DD/MM/YYYY HH:mm");
-                        item.CreateDate = dayjs(item.CreateDate).format("DD/MM/YYYY HH:mm");
+                    this.chapters = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                        item.updateDate = dayjs(item.spdateDate).format("DD/MM/YYYY HH:mm");
+                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
                         return item;
                     })));
                 })
@@ -123,16 +93,15 @@ export default {
                 })
         },
         handleCurrentChange(val) {
-            this.loadChapters(val - 1)
+            this.loadChapters(val)
         },
         handleRowClick(row) {
-            console.log(row.ChapterId)
-            var chatperId = row.ChapterId
-            var chapterTitle = `Chuong-${row.ChapterNum}`
-            var novelName = this.novel.Url.replaceAll(' ', '-')
+            console.log(row.chapterId)
+            var chapterTitle = `Chuong-${row.chapterNum}`
+            var novelName = this.novel.bookTitle
             // var url = `/${this.novel.BookId}/${novelName}/${chatperId}/${chapterTitle}`
             var url = `/${novelName}/${chapterTitle}`
-            this.selectChapter({ ChapterId: row.ChapterId, ChapterTitle: row.ChapterTitle, ChapterNum: row.ChapterNum })
+            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
             this.$router.push(url);
         },
     },
@@ -143,8 +112,8 @@ export default {
     <layout-default>
         <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/' }"><i class="fa-solid fa-house"></i></el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/' }">{{ novel.GenreName }}</el-breadcrumb-item>
-            <el-breadcrumb-item>{{ novel.BookTitle }}</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/' }">{{ novel.genreName }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ novel.bookTitle }}</el-breadcrumb-item>
         </el-breadcrumb>
         <el-container>
             <el-row class="novel-details" :gutter="20">
@@ -159,18 +128,18 @@ export default {
                                     <el-col :span="16" class="flex-col">
                                         <div class="series-info">
                                             <div class="series-title-group">
-                                                <span class="series-title">{{ novel.BookTitle }}</span>
+                                                <span class="series-title">{{ novel.bookTitle }}</span>
                                             </div>
                                             <div class="genre">
-                                                <span class="series-genre">{{ novel.GenreName }}</span>
+                                                <span class="series-genre">{{ novel.genreName }}</span>
                                             </div>
                                             <div class="info-item">
                                                 <span class="info-name">Tác giả: </span>
-                                                <span class="info-value"><a href="#">{{ novel.AuthorName }}</a></span>
+                                                <span class="info-value"><a href="#">{{ novel.authorName }}</a></span>
                                             </div>
                                             <div class="info-item">
                                                 <span class="info-name">Tình trạng: </span>
-                                                <span class="info-value">{{ novel.Status }}<a href="#">
+                                                <span class="info-value">{{ novel.status }}<a href="#">
                                                     </a></span>
                                             </div>
 
@@ -181,13 +150,13 @@ export default {
                                                     @click="console.log('follow')">
                                                     <span class="block feature-value"><i
                                                             class="fa-regular fa-heart"></i></span>
-                                                    <span class="block feature-name">{{ novel.Followers }}</span>
+                                                    <span class="block feature-name">{{ novel.followers }}</span>
                                                 </el-col>
                                                 <el-col class="feature-item" :span="6" :align="'center'"
                                                     @click="console.log('rating')">
                                                     <span class="block feature-value"><i
                                                             class="fa-regular fa-star"></i></span>
-                                                    <span class="block feature-name">{{ novel.AverageRating }}</span>
+                                                    <span class="block feature-name">{{ novel.averageRating }}</span>
                                                 </el-col>
                                                 <el-col class="feature-item" :span="6" :align="'center'"
                                                     @click="console.log('navigate to index')">
@@ -218,12 +187,12 @@ export default {
                                                 <el-col class="statistics-item" :span="6" :align="'center'"
                                                     @click="console.log('navigate to index')">
                                                     <span class="block feature-name">Đánh giá</span>
-                                                    <span class="block feature-value font-bold">{{ novel.AverageRating}} / {{ novel.Reviews }}</span>
+                                                    <span class="block feature-value font-bold">{{ novel.averageRating}} / {{ novel.reviews }}</span>
                                                 </el-col>
                                                 <el-col class="statistics-item" :span="6" :align="'center'"
                                                     @click="console.log('share')">
                                                     <span class="block feature-name">Lượt xem</span>
-                                                    <span class="block feature-value font-bold">{{ novel.Views }}</span>
+                                                    <span class="block feature-value font-bold">{{ novel.views }}</span>
                                                 </el-col>
                                             </el-row>
                                         </div>
@@ -243,7 +212,7 @@ export default {
                             <div class="block series-owner">
                                 <img class="block" width="50" heigh="50"
                                     src="https://as2.ftcdn.net/v2/jpg/03/31/69/91/1000_F_331699188_lRpvqxO5QRtwOM05gR50ImaaJgBx68vi.jpg">
-                                <span class="block owner-name">{{ novel.Username }}</span>
+                                <span class="block owner-name">{{ novel.username }}</span>
                             </div>
                             <div class="owner-donate"></div>
                         </div>
@@ -272,7 +241,7 @@ export default {
                         <el-container class="main-item">
                             <el-header>
                                 <span>Reviews mới</span>
-                                <span style="float: right;">{{ this.novel.Reviews }}</span>
+                                <span style="float: right;">{{ this.novel.reviews }}</span>
                             </el-header>
                             <el-main class="review-group">
                                 <div class="review-item">
@@ -304,8 +273,8 @@ export default {
                             <el-main class="chapter-index">
                                 <el-table :data="chapters" stripe style="width: 100%" :show-header="false"
                                     @row-click="handleRowClick">
-                                    <el-table-column prop="ChapterTitle" label="Title" :align="'left'" min-width="200" />
-                                    <el-table-column prop="UpdateDate" label="Update" :align="'right'" />
+                                    <el-table-column prop="chapterTitle" label="Title" :align="'left'" min-width="200" />
+                                    <el-table-column prop="updateDate" label="Update" :align="'right'" />
                                 </el-table>
                             </el-main>
                             <el-footer class="pagination" height="40px">
