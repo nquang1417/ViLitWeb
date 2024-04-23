@@ -365,4 +365,5 @@ FodyWeavers.xsd
 /vietTTS/gta/
 /vietTTS/train_data/
 /vietTTS/test_data/
-/vietTTS/assets/infore
+/vietTTS/assets/infore/hifigan
+/vietTTS/assets/infore/nat
