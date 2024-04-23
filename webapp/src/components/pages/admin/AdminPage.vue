@@ -1,13 +1,13 @@
-<script lang="ts">
+<script>
 export default {
     name: 'AdminPage'
 }
 </script>
 
 <template>
-    <layout-default>
-
-    </layout-default>
+    <admin-layout>
+        <router-view ></router-view>
+    </admin-layout>
 </template>
 
 <style scoped>

@@ -12,12 +12,10 @@ namespace ViL.Api.Controllers
     public class BookInfoController : Controller
     {
         private IBookInfoService _bookInfoService;
-        private IWebHostEnvironment _webHostEnvironment;
 
-        public BookInfoController(IBookInfoService bookInfoService, IWebHostEnvironment webHostEnvironment)
+        public BookInfoController(IBookInfoService bookInfoService)
         {
             _bookInfoService = bookInfoService;
-            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet("all")]
@@ -40,8 +38,21 @@ namespace ViL.Api.Controllers
             }
         }
 
+        [HttpGet("new-updates")]
+        public IActionResult GetNewUpdates()
+        {
+            try
+            {
+                var query = _bookInfoService.GetAllDetails().OrderByDescending(book => book.UpdateDate).Take(20);
+                return Ok(query.ToList());
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("details")]
-        public IActionResult GetBookDetails(string bookId)
+        public IActionResult sGetBookDetails(string bookId)
         {
             try
             {
@@ -231,6 +242,10 @@ namespace ViL.Api.Controllers
                 var query = _bookInfoService.GetById(bookId);
                 if (query != null)
                 {
+                    if (Directory.Exists(query.Url))
+                    {
+                        Directory.Delete(query.Url, true);
+                    }
                     _bookInfoService.Delete(query);
                 }
                 return Ok();

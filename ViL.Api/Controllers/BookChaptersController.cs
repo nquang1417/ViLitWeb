@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using System;
 using Microsoft.AspNetCore.Mvc;
 
 using ViL.Api.Models;
@@ -215,6 +216,7 @@ namespace ViL.Api.Controllers
                     return StatusCode(204);
                 } else
                 {
+
                     string path = query.FileName ?? string.Empty;
                     var _content = System.IO.File.ReadAllBytes(path);
                     //byte[] bytes = Encoding.UTF8.GetBytes(_content);
@@ -234,13 +236,20 @@ namespace ViL.Api.Controllers
         {
             try
             {
-                var query = _bookChaptersService.Get(chapter => chapter.BookId == bookId)
-                                                .OrderByDescending(chapter => chapter.ChapterNum)
-                                                .First();
+                var query = _bookChaptersService.Get(chapter => chapter.BookId == bookId && chapter.Status != (int)ChapterStatus.Deleted);
+                BookChapters chapter = new BookChapters(bookId, 0);
+                if (query != null)
+                {
+                    if (query.Count() > 0)
+                    {
+                        chapter = query.OrderByDescending(chapter => chapter.ChapterNum).First();
+                    } 
+                }
+                                                
                 var uploader = HttpContext.Items["UserId"]?.ToString();
-                var newChapNo = ++query.ChapterNum;
+                var newChapNo = ++chapter.ChapterNum;
                 var newChapter = new BookChapters(bookId, newChapNo, uploader);
-                newChapter.Url = query.Url;
+                newChapter.Url = chapter.Url;
                 return Ok(newChapter);
             } catch (Exception ex)
             {
@@ -255,9 +264,9 @@ namespace ViL.Api.Controllers
             try
             {
                 var uploader = HttpContext.Items["UserId"]?.ToString();
-                var newChapter = new BookChapters(entity.BookId, entity.ChapterNum, uploader, entity.ChapterTitle);
-                _bookChaptersService.Add(newChapter);
-                return Ok();
+                //var newChapter = new BookChapters(entity.BookId, entity.ChapterNum, uploader, entity.ChapterTitle);
+                _bookChaptersService.Add(entity);
+                return StatusCode(201, entity);
 
             } catch (Exception ex)
             {
@@ -286,7 +295,7 @@ namespace ViL.Api.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                BackgroundJob.Enqueue(() => _bookChaptersService.ProcessAudioAsync(folderPath, fileName, newChapter.UploaderId));
+                //BackgroundJob.Enqueue(() => _bookChaptersService.ProcessAudioAsync(folderPath, fileName, newChapter.UploaderId));
                 return StatusCode(201);
             } catch (Exception ex)
             {
@@ -374,6 +383,11 @@ namespace ViL.Api.Controllers
                 }
                 else
                 {
+                    var filePath = query.FileName;
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
                     _bookChaptersService.Delete(query);
                     return Ok();
                 }

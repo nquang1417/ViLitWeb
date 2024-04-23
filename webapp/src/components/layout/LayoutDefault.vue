@@ -9,7 +9,7 @@
     </el-container>
 </template>
 
-<script lang="ts">
+<script>
 export default {
     name: 'LayoutDefault',
     data() {

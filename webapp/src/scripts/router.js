@@ -11,7 +11,9 @@ import NovelDetails from '../components/pages/NovelDetails.vue'
 import LoginPage from '../components/pages/LoginPage.vue'
 import SignupPage from '../components/pages/SignupPage.vue'
 import AdminPage from '../components/pages/admin/AdminPage.vue'
+import AdminHome from '../components/pages/admin/AdminHome.vue'
 import AdminLogin from '../components/pages/admin/AdminLogin.vue'
+import UserManagement from '../components/pages/admin/UserManagement.vue'
 import NovelWorkspace from '../components/pages/NovelWorkspace.vue'
 import NewChapter from '../components/pages/NewChapter.vue'
 
@@ -20,7 +22,15 @@ const routes = [
     { path: '/home', redirect: '/' },
     { path: '/login', name: 'Login', component: LoginPage },
     { path: '/signup', name: 'Signup', component: SignupPage },
-    { path: '/admin', name: 'AdminPage', component: AdminPage, meta: { requiredAuth: true } },
+    { 
+        path: '/admin', name: 'AdminPage', component: AdminPage, meta: { requiredAuth: true },
+        children: [
+            {
+                path: '', name: 'AdminHome', component: AdminHome, meta: { requiredAuth: true },
+            }
+        ]
+    },    
+    { path: '/admin/user-management', name: 'UserManagement', component: UserManagement, meta: {requiredAuth: true}},
     { path: '/admin/login', name: 'AdminLogin', component: AdminLogin },
     {
         path: '/dashboard', name: 'DashboardPage', component: DashboardPage, meta: { requiredAuth: true },
@@ -46,8 +56,7 @@ const routes = [
         meta: { requiredAuth: true }
     },
     {
-        fullpath: '/dashboard/edit-chapter/:chapterId/:chapterNo',
-        path: '/dashboard/edit-chapter/Chuong-:chapterNo',
+        path: '/dashboard/edit-chapter/:chapterId/',
         name: 'EditChapter',
         component: NewChapter,
         meta: { requiredAuth: true },
@@ -100,7 +109,6 @@ router.beforeEach((to, from, next) => {
         store.dispatch('novel/clearSession')
     }
     if (to.path.includes('/admin')) {
-
         if (to.path === '/admin/login' && store.getters["auth/getLoginStatus"]) {
             var user = store.getters["auth/getAuthData"]
             if (user.role == 'Admin') {
@@ -108,7 +116,9 @@ router.beforeEach((to, from, next) => {
                     path: '/admin'
                 })
             } else {
-                next()
+                next({
+                    path: '/admin/login'
+                })
             }
         } else if (to.matched.some(record => record.meta.requiredAuth)) {
             if (!store.getters["auth/getLoginStatus"]) {

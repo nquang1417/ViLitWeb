@@ -7,12 +7,15 @@ using ViL.Services.Infrastructure;
 namespace ViL.Services.Services
 {
     public interface IBookmarksService : IServices<Bookmarks>
-    {
+    { 
     }
 
     public class BookmarksService : ServiceBase<Bookmarks>, IBookmarksService
     {
-        public BookmarksService(IBookmarksRepository repository, ViLDbContext dbContext) : base(repository, dbContext) { }
+
+        public BookmarksService(IBookmarksRepository repository, ViLDbContext dbContext) : base(repository, dbContext)
+        {
+        }
 
         protected override bool validate(Bookmarks entity, bool isUpdate = false)
         {

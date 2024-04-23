@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq.Expressions;
 using ViL.Api.Models;
 using ViL.Common.Exceptions;
@@ -27,7 +28,13 @@ namespace ViL.Api.Controllers
         {
             try
             {
-                return Ok(_usersService.GetAll().ToList());
+                var query = _usersService.GetAll();
+                var result = new List<UserInfo>();
+                foreach (var item in query)
+                {
+                    result.Add(new UserInfo(item));
+                }
+                return Ok(result);
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -42,7 +49,7 @@ namespace ViL.Api.Controllers
                 var user = _usersService.GetById(id);
                 if (user != null)
                 {
-                    return Ok(user);
+                    return Ok(new UserInfo(user));
                 } else
                 {
                     return NoContent();
@@ -109,12 +116,19 @@ namespace ViL.Api.Controllers
 
         [HttpPut("update")]
         [ViLAuthorize]
-        public IActionResult Update(Users user)
+        public IActionResult Update(UserInfo userInfo)
         {
             try
             {                
-                _usersService.Update(user);
-                return Ok();
+                var user = _usersService.GetById(userInfo.UserId);
+                if (user != null)
+                {
+                    _usersService.Update(user);
+                    return Ok();
+                } else
+                {
+                    return StatusCode(404);
+                }                
             } catch (Exception ex)
             {
                 var error = new
@@ -138,6 +152,32 @@ namespace ViL.Api.Controllers
                 return BadRequest(ex.Message);
             }
             
+        }
+
+        [HttpPut("change-password")]
+        [ViLAuthorize]
+        public IActionResult ChangePassword(PasswordModifier modifier)
+        {
+            try
+            {
+                if (modifier == null
+                || modifier.UserId.IsNullOrEmpty()
+                || modifier.OldPassword.IsNullOrEmpty()
+                || modifier.NewPassword.IsNullOrEmpty())
+                {
+                    return BadRequest();
+                }
+                var user = _usersService.GetById(modifier.UserId);
+                if (user != null && user.Password == modifier.OldPassword)
+                {
+                    user.Password = modifier.NewPassword;
+                    _usersService.Update(user);
+                }
+                return Ok();
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }            
         }
     }
 }

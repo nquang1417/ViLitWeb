@@ -1,5 +1,5 @@
 <script lang="js">
-import { pad } from '../../scripts/utils/utils.js'
+import { ElNotification } from 'element-plus'
 import { mapActions, mapGetters } from 'vuex'
 import axios from 'axios'
 
@@ -13,13 +13,15 @@ export default {
             minChapterNum: 0,
             chapterFileContent: '',
             fileList: [],
-            
+
         }
     },
     props: ['novelTitle', 'chapterId'],
     mounted() {
+        this.novel = this.getNovel
         if (this.$route.name === 'EditChapter') {
             this.loadChapter()
+            
         } else {
             this.getNewChapter()
         }
@@ -29,6 +31,7 @@ export default {
             this.chapter = {}
             this.chapterContent = ''
             this.fileList = []
+            this.novel = this.getNovel
         }
     },
     computed: {
@@ -40,10 +43,18 @@ export default {
             gettersAuthData: 'getAuthData',
         }),
         uploadHeaders() {
-            var header = {
-                'access_token': `${this.gettersAuthData.token}`
+            if (this.$route.name === 'EditChapter') {
+                var header = {
+                    'access_token': `${this.gettersAuthData.token}`,
+                    'ownerId': `${this.novel.uploaderId}`
+                }
+                return header
+            } else {
+                var header = {
+                    'access_token': `${this.gettersAuthData.token}`,
+                }
+                return header
             }
-            return header
         }
     },
     methods: {
@@ -58,79 +69,188 @@ export default {
                     'access_token': `${this.gettersAuthData.token}`
                 }
             }).then(response => {
-                    this.chapter = response.data
-                    this.chapter.createBy = this.gettersAuthData.userId
-                    this.chapter.updateBy = this.gettersAuthData.userId
+                this.chapter = response.data
+                this.chapter.createBy = this.gettersAuthData.userId
+                this.chapter.updateBy = this.gettersAuthData.userId
             }).catch(e => {
-                    console.error(e)
+                console.error(e)
             })
         },
         async loadChapter() {
-            var url = `https://localhost:44367/api/BookChapters/${this.chapterId}`
+            var url = `http://localhost:10454/api/BookChapters/get-chapter?chapterId=${this.chapterId}`
             await axios.get(url)
                 .then(response => {
-                    this.chapter = response.data.Chapter
-                    this.chapterFileContent = response.data.File
-                    this.minChapterNum = this.chapter.ChapterNum
+                    this.chapter = response.data.chapter
+                    this.chapterFileContent = response.data.file
+                    this.minChapterNum = this.chapter.chapterNum
                 })
                 .catch(e => {
                     console.error(e)
                 })
-            var decodedContent = atob(this.chapterFileContent.FileContents)
+            var decodedContent = atob(this.chapterFileContent.fileContents)
             var utf8decoder = new TextDecoder('utf-8')
             var text = utf8decoder.decode(new Uint8Array([...decodedContent].map(char => char.charCodeAt(0))))
             this.chapterContent = text
         },
+
         async saveChapter() {
+            if (this.chapter.status == 1) {
+                this.novel.chapters -= 1
+            }
             if (this.$route.name === 'EditChapter') {
-                var url = `https://localhost:44367/api/BookChapters/ChangeStatus?status=0`
+                var oldStatus = this.chapter.status
+                var url = `http://localhost:10454/api/BookChapters/change-status?chapterId=${this.chapter.chapterId}&status=0`
                 await axios.put(url, this.chapter, {
                     headers: {
-                        'Content-Type': 'application/json-patch+json'
+                        'access_token': `${this.gettersAuthData.token}`,
+                        'ownerId': `${this.novel.uploaderId}`
                     }
                 }).then(response => {
+                    if (response.status == 200) {
+                        var uploadUrl = `http://localhost:10454/api/BookChapters/upload-chapter?chapterId=${this.chapter.chapterId}`
+                        var txtEncode = new TextEncoder('utf-8').encode(this.chapterContent)
+                        var file = new Blob([txtEncode], { type: 'text/plain' })
+                        var formData = new FormData()
+                        formData.append('file', file, this.chapter.fileName)
+                        return axios.post(uploadUrl, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'access_token': `${this.gettersAuthData.token}`,
+                                'ownerId': `${this.novel.uploaderId}`
+                            }
+                        })
+                    } else {
+                        ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                    }
+                }).then(response => {
+                    if (response.status == 201) {
+                        if (oldStatus == 1) {
+                            this.updateNovel()
+                        }
+                        ElNotification({ title: 'Thành công', message: 'Cập nhật thành công!', type: 'success' })
+                    } else {
+                        ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                    }
+                    this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
                 })
-                    .catch(error => {
-                        console.log(error)
-                    })
             } else {
-                this.chapter.Status = '0'
-                var url = `https://localhost:44367/api/BookChapters/add`
+                this.chapter.status = 0
+                var url = `http://localhost:10454/api/BookChapters/add`
                 await axios.post(url, this.chapter, {
                     headers: {
-                        'Content-Type': 'application/json-patch+json'
+                        'Content-Type': 'application/json-patch+json',
+                        'access_token': `${this.gettersAuthData.token}`,
+                        'ownerId': `${this.novel.uploaderId}`
                     }
                 }).then(response => {
-                    this.$route.push(`/dashboard/workspace/${this.getNovel.BookId}`)
+                    if (response.status == 201) {
+                        this.chapter = response.data
+                        var uploadUrl = `http://localhost:10454/api/BookChapters/upload-chapter?chapterId=${this.chapter.chapterId}`
+                        var txtEncode = new TextEncoder('utf-8').encode(this.chapterContent)
+                        var file = new Blob([txtEncode], { type: 'text/plain' })
+                        var formData = new FormData()
+                        formData.append('file', file, this.chapter.fileName)
+                        return axios.post(uploadUrl, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'access_token': `${this.gettersAuthData.token}`,
+                                'ownerId': `${this.novel.uploaderId}`
+                            }
+                        })
+                    } else {
+                        ElNotification({title: 'Lỗi', message: 'Đã có lỗi xảy ra!!',type: 'error'})
+                    }
+                }).then(response => {
+                    if (response.status == 201) {
+                        ElNotification({title: 'Thành công',message: 'Đã lưu bản nháp mới!',type: 'success'})
+                    } else {
+                        ElNotification({title: 'Lỗi', message: 'Đã có lỗi xảy ra!!',type: 'error',})
+                    }
+                    this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
                 })
-                    .catch(error => {
-                        console.error(error)
-                    })
+                .catch(error => {
+                    console.error(error)
+                })
             }
         },
+
         async publishChapter() {
-            this.novel.Chapters += 1
+            
+            if (this.chapter.status != 1) {
+                this.novel.chapters += 1
+            }
             if (this.$route.name === 'EditChapter') {
-                var url = `https://localhost:44367/api/BookChapters/ChangeStatus?status=1`
+                var oldStatus = this.chapter.status
+                var url = `http://localhost:10454/api/BookChapters/change-status?chapterId=${this.chapter.chapterId}&status=1`
                 await axios.put(url, this.chapter, {
                     headers: {
-                        'Content-Type': 'application/json-patch+json'
+                        'Content-Type': 'application/json-patch+json',
+                        'access_token': `${this.gettersAuthData.token}`
                     }
                 }).then(response => {
-                    this.$route.push(`/dashboard/workspace/${this.getNovel.BookId}`)
-                })
-                    .catch(error => {
+                    if (response.status == 200) {
+                        var uploadUrl = `http://localhost:10454/api/BookChapters/upload-chapter?chapterId=${this.chapter.chapterId}`
+                        var txtEncode = new TextEncoder('utf-8').encode(this.chapterContent)
+                        var file = new Blob([txtEncode], { type: 'text/plain' })
+                        var formData = new FormData()
+                        formData.append('file', file, this.chapter.fileName)
+                        return axios.post(uploadUrl, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'access_token': `${this.gettersAuthData.token}`
+                            }
+                        })
+                    } else {
+                        ElNotification({title: 'Lỗi', message: 'Đã có lỗi xảy ra!!',type: 'error',})
+                    }
+                }).then(response => {
+                    if (response.status == 201) {
+                        ElNotification({title: 'Thành công', message: 'Xuất bản chương mới thành công!', type: 'success'})
+                        if (oldStatus != 1) {
+                            this.updateNovel()
+                        }
+                    } else {
+                        ElNotification({title: 'Lỗi', message: 'Đã có lỗi xảy ra!!',type: 'error'})
+                    }
+                    this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
+                }).catch(error => {
                         console.log(error)
                     })
             } else {
-                this.chapter.Status = '1'
-                var url = `https://localhost:44367/api/BookChapters/add`
+                this.chapter.Status = 1
+                var url = `http://localhost:10454/api/BookChapters/add`
                 await axios.post(url, this.chapter, {
                     headers: {
-                        'Content-Type': 'application/json-patch+json'
+                        'Content-Type': 'application/json-patch+json',
+                        'access_token': `${this.gettersAuthData.token}`,
+                        'ownerId': `${this.novel.uploaderId}`
                     }
                 }).then(response => {
-                    this.updateNovel()
+                    if (response.status == 201) {
+                        this.chapter = response.data
+                        var uploadUrl = `http://localhost:10454/api/BookChapters/upload-chapter?chapterId=${this.chapter.chapterId}`
+                        var txtEncode = new TextEncoder('utf-8').encode(this.chapterContent)
+                        var file = new Blob([txtEncode], { type: 'text/plain' })
+                        var formData = new FormData()
+                        formData.append('file', file, this.chapter.fileName)
+                        return axios.post(uploadUrl, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'access_token': `${this.gettersAuthData.token}`,
+                                'ownerId': `${this.novel.uploaderId}`
+                            }
+                        })
+                    } else {
+                        ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                    }
+                }).then(response => {
+                    if (response.status == 201) {
+                        this.updateNovel()
+                        ElNotification({title: 'Thành công', message: 'Xuất bản chương mới thành công!', type: 'success'})
+                    } else {
+                        ElNotification({title: 'Lỗi', message: 'Đã có lỗi xảy ra!!',type: 'error'})
+                    }
+                    this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)                    
                 })
                     .catch(error => {
                         console.error(error)
@@ -140,13 +260,15 @@ export default {
         },
         // hàm này đang bị sai logic
         async updateNovel() {
-            var url = `https://localhost:44367/api/BookInfo/update`
-            await axios.put(url, this.novelDetails, {
+            var url = `http://localhost:10454/api/BookInfo/update?bookId=${this.getNovel.bookId}`
+            await axios.put(url, this.novel, {
                 headers: {
-                    'Content-Type': 'application/json-patch+json'
+                    'Content-Type': 'application/json-patch+json',
+                    'access_token': `${this.gettersAuthData.token}`,
+                    'ownerId': `${this.novel.uploaderId}`
                 }
             }).then(response => {
-                this.$route.push(`/dashboard/workspace/${this.getNovel.BookId}`)
+                // something                
             }).catch(error => {
                 console.log(error)
             })
@@ -157,7 +279,7 @@ export default {
             if (rawFile.type !== 'text/plain') {
                 this.$message.error('Phải là định dạng .txt!');
                 return false;
-            } 
+            }
             return true;
         },
         handleSuccess(response, uploadFile) {
@@ -198,7 +320,8 @@ export default {
         </template>
         <el-container class="editor">
             <el-main>
-                <quill-editor toolbar="essential" contentType="text" v-model:content="chapterContent"></quill-editor>
+                <quill-editor toolbar="essential" contentType="text"
+                    v-model:content="this.chapterContent"></quill-editor>
             </el-main>
         </el-container>
     </dashboard-layout>

@@ -86,12 +86,14 @@ export default {
             var url = `http://localhost:10454/api/BookChapters/get-chapters?bookId=${this.novelId}&page=${page}`
             await axios.get(url)
                 .then(response => {
-                    this.chapters = JSON.parse(JSON.stringify(response.data.data.map(item => {
-                        item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
-                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
-                        return item;
-                    })));
-                    this.totalChapters = response.data.totals
+                    if (response.status == 200) {
+                        this.chapters = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                            item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
+                            item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
+                            return item;
+                        })));
+                        this.totalChapters = response.data.totals
+                    }
                 })
                 .catch(e => {
                     console.error(e);
@@ -106,12 +108,15 @@ export default {
                     'access_token': `${this.gettersAuthData.token}`
                 }
             }).then(response => {
-                this.drafts = JSON.parse(JSON.stringify(response.data.data.map(item => {
-                    item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
-                    item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
-                    return item;
-                })));
-                this.totalDrafts = response.data.totals
+                if (response.status == 200) {
+                    this.drafts = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                        item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
+                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
+                        return item;
+                    })));
+                    this.totalDrafts = response.data.totals
+                }
+
             }).catch(e => {
                     console.error(e);
             })
@@ -146,14 +151,13 @@ export default {
         },
         handleChapterRowClick(row) {
             console.log(row.ChapterId)
-            var novelName = this.novel.Url.replaceAll(' ', '-')
-            var url = `/dashboard/${novelName}/edit-chapter/${row.ChapterId}`
-            this.selectChapter({ chapterId: row.ChapterId, chapterTitle: row.ChapterTitle, chapterNum: row.ChapterNum })
+            var url = `/dashboard/edit-chapter/${row.chapterId}`
+            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
             this.$router.push(url);
         },
         handleChapterEdit(index, row) {
             var novelName = row.Url.replaceAll(' ', '-')
-            this.$router.push(`/dashboard/${novelName}/edit-chapter/${row.ChapterId}`)
+            this.$router.push(`/dashboard/edit-chapter/${row.chapterId}`)
         },
         handleChapterDelete(index, row) {
             this.changeStatus(row, 2)
@@ -164,16 +168,14 @@ export default {
             this.loadDrafts(val)
         },
         handleDraftsRowClick(row) {
-            console.log(row.ChapterId)
-            var novelName = this.novel.Url.replaceAll(' ', '-')
             // var url = `/${this.novel.BookId}/${novelName}/${chatperId}/${chapterTitle}`
-            var url = `/dashboard/${novelName}/edit-chapter/${row.ChapterId}`
-            this.selectChapter({ ChapterId: row.ChapterId, ChapterTitle: row.ChapterTitle, ChapterNum: row.ChapterNum })
+            var url = `/dashboard/edit-chapter/${row.chapterId}`
+            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
             this.$router.push(url);
         },
         handleDraftsPublish(index, row) {
-            var novelName = row.Url.replaceAll(' ', '-')
-            this.$router.push(`/dashboard/${novelName}/edit-chapter/${row.ChapterId}`)
+            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
+            this.$router.push(`/dashboard/edit-chapter/${row.chapterId}`)
         },
         handleDraftsDelete(index, row) {
             
@@ -185,15 +187,13 @@ export default {
         },
         handleTrashsRowClick(row) {
             console.log(row.ChapterId)
-            var novelName = this.novel.Url.replaceAll(' ', '-')
             // var url = `/${this.novel.BookId}/${novelName}/${chatperId}/${chapterTitle}`
-            var url = `/dashboard/${novelName}/edit-chapter/${row.ChapterId}`
-            this.selectChapter({ ChapterId: row.ChapterId, ChapterTitle: row.ChapterTitle, ChapterNum: row.ChapterNum })
+            var url = `/dashboard/edit-chapter/${row.chapterId}`
+            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
             this.$router.push(url);
         },
         handleTrashsRestore(index, row) {
-            var novelName = row.Url.replaceAll(' ', '-')
-            this.$router.push(`/dashboard/${novelName}/edit-chapter/${row.ChapterId}`)
+            this.$router.push(`/dashboard/edit-chapter/${row.chapterId}`)
         },
         handleTrashsClear(index, row) {
             

@@ -22,7 +22,7 @@ namespace ViL.Data.Models
             ChapterId = string.Empty;
         }
 
-        public Bookmarks(string userID, string chapterId) : base()
+        public Bookmarks(string userID, string chapterId) : base(creaeteBy: userID, updateBy: userID)
         {
             BookmarkId = Guid.NewGuid().ToString();
             UserId = userID;

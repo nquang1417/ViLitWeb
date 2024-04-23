@@ -1,4 +1,4 @@
-<script lang="js">
+<script>
 import { ref } from 'vue'
 import axios from 'axios'
 import dayjs from "dayjs"
@@ -26,9 +26,9 @@ export default {
     },
     computed: {
         filterTableData() {
-            return this.novels.filter((data) =>
+            return this.novels.filter((data) =>                
                 !this.search ||
-                data.title.toLowerCase().includes(this.search.toLowerCase()))
+                data.bookTitle.toLowerCase().includes(this.search.toLowerCase()))
         },
         ...mapGetters('auth', {
             getUser: 'getAuthData'
@@ -53,10 +53,11 @@ export default {
         },
         async loadNovel(page) {
 
-            var params = `uploaderId=${this.getUser.userId}&page=${page}`
-            var url = `http://localhost:10454/api/BookInfo/filter-by-uploader?${params}`
+            var url = `http://localhost:10454/api/BookInfo/filter?page=${page}`
             await axios
-                .get(url)
+                .post(url, {
+                    uploaderId: `${this.getUser.userId}`
+                })
                 .then(response => {
                     this.novels = JSON.parse(JSON.stringify(response.data.map(item => {
                         item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm:ss");

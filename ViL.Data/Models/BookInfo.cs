@@ -38,7 +38,7 @@ namespace ViL.Data.Models
             Url = BookId;
         }
 
-        public BookInfo(string bookTitle, string genreId, string uploaderId) : base()
+        public BookInfo(string bookTitle, string genreId, string uploaderId) : base(creaeteBy: uploaderId, updateBy: uploaderId)
         {
             BookId = Guid.NewGuid().ToString();
             BookTitle = bookTitle;

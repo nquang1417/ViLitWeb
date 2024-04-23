@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ViL.Common.Enums;
 
@@ -27,11 +28,11 @@ namespace ViL.Data.Models
             BookId = string.Empty;
         }
 
-        public BookChapters(string bookId, int? chapterNo, string? uploaderId, string? title = null) : base(status: (int)ChapterStatus.Draft)
+        public BookChapters(string bookId, int? chapterNo, string uploaderId = "", string? title = "") : base(status: (int)ChapterStatus.Draft, creaeteBy: uploaderId, updateBy:uploaderId)
         {
             ChapterId = Guid.NewGuid().ToString();
             BookId = bookId;
-            ChapterTitle = $"Chương {chapterNo}" + (title!= null && title!="" ? $": {title}" : "");
+            ChapterTitle = $"Chương {chapterNo}" + (!title.IsNullOrEmpty() ? $": {title}" : "");
             ChapterNum = chapterNo;
             Images = string.Empty;
             FileName = $"..\\Data\\{bookId}\\text\\{chapterNo.ToString()?.PadLeft(5,'0')}.txt";

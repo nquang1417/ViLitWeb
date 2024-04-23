@@ -44,7 +44,7 @@ export default {
     },
     mounted() {
         this.loadGenres()
-        
+
         if (this.$route.name === 'EditNovel') {
             this.loadNovel()
         }
@@ -54,6 +54,20 @@ export default {
         ...mapGetters('auth', {
             gettersAuthData: 'getAuthData',
         }),
+        uploadHeaders() {
+            if (this.$route.name === 'EditNovel') {
+                var header = {
+                    'access_token': `${this.gettersAuthData.token}`,
+                    'ownerId': `${this.novelDetails.uploaderId}`
+                }
+                return header
+            } else {
+                var header = {
+                    'access_token': `${this.gettersAuthData.token}`,
+                }
+                return header
+            }
+        }
     },
     watch: {
         $route(to, from) {
@@ -83,10 +97,12 @@ export default {
         async update() {
             try {
 
-                var url = `https://localhost:44367/api/BookInfo/update`
+                var url = `http://localhost:10454/api/BookInfo/update`
                 var respone = await axios.put(url, this.novelDetails, {
                     headers: {
-                        'Content-Type': 'application/json-patch+json'
+                        'Content-Type': 'application/json-patch+json',
+                        'access_token': `${this.gettersAuthData.token}`,
+                        'ownerId': `${this.novelDetails.uploaderId}`
                     }
                 })
             } catch (error) {
@@ -102,7 +118,8 @@ export default {
                 var url = `http://localhost:10454/api/BookInfo/add`
                 var response = await axios.post(url, this.novelDetails, {
                     headers: {
-                        'Content-Type': 'application/json-patch+json'
+                        'Content-Type': 'application/json-patch+json',
+                        'access_token': `${this.gettersAuthData.token}`
                     }
                 })
                 this.saveNovel(response.data)
@@ -124,7 +141,7 @@ export default {
                             type: 'success',
                         })
                         this.submit()
-                        
+
                     }
                     if (this.$route.name === 'EditNovel') {
                         ElNotification({
@@ -144,29 +161,8 @@ export default {
                 }
             })
         },
-        
-        async handleFileUpload(file) {
-            // this.coverFile = this.$refs.fileInput.files[0];
-            
-            // Xử lý tệp đã chọn theo yêu cầu của bạn
-            var url = 'https://freeimage.host/api/1/upload'
-            var formData = new FormData()
-            formData.append('key', '6d207e02198a847aa98d0a2a901485a5')
-            formData.append('source', file)
-            formData.append('format', 'json')
 
-            try {
-                var response = await axios.post(url, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                })
-                // this.coverUrl = response.data.image.url
-                this.novelDetails.bookCover = response.data.image.url
-            } catch (error) {
-                console.error(error)
-            }
-        },
+
         async loadGenres() {
             var url = `http://localhost:10454/api/Genres/lists`;
             await axios.get(url)
@@ -191,7 +187,6 @@ export default {
         },
         beforeUpload(rawFile) {
             // this.coverUrl = URL.createObjectURL(rawFile.raw);
-            //this.handleFileUpload(rawFile)
             this.coverFile = rawFile
             if (rawFile.type !== 'image/jpeg') {
                 this.$message.error('Định dạng ảnh bìa phải là jpg!');
@@ -219,17 +214,16 @@ export default {
                 <span>Series</span>
             </div>
             <div class="detail-form__body">
-                <el-form ref="ruleFormRef" :model="this.novelDetails" label-width="120px" :rules="this.rules" status-icon>
+                <el-form ref="ruleFormRef" :model="this.novelDetails" label-width="120px" :rules="this.rules"
+                    status-icon>
                     <el-form-item>
-                        <el-upload class="cover-uploader" 
-                            :action="this.uploadUrl"
-                            :show-file-list="false" :on-success="handleSuccess" 
-                            :before-upload="beforeUpload">
+                        <el-upload class="cover-uploader" :action="this.uploadUrl" :show-file-list="false" :headers="this.uploadHeaders"
+                            :on-success="handleSuccess" :before-upload="beforeUpload">
                             <img v-if="this.coverUrl" :src="this.coverUrl" class="cover" />
                             <el-icon v-else class="cover-uploader-icon">
                                 <Plus />
                             </el-icon>
-                        </el-upload>                        
+                        </el-upload>
                     </el-form-item>
                     <el-form-item label="Tiêu đề" prop="bookTitle">
                         <el-input v-model="this.novelDetails.bookTitle" />
@@ -360,29 +354,29 @@ export default {
 }
 
 .cover-uploader .cover {
-  width: 178px;
-  height: 178px;
-  display: block;
+    width: 178px;
+    height: 178px;
+    display: block;
 }
 
 .cover-uploader .el-upload {
-  border: 1px dashed var(--el-border-color);
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: var(--el-transition-duration-fast);
+    border: 1px dashed var(--el-border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: var(--el-transition-duration-fast);
 }
 
 .cover-uploader .el-upload:hover {
-  border-color: var(--el-color-primary);
+    border-color: var(--el-color-primary);
 }
 
 :deep(.el-icon.cover-uploader-icon) {
-  font-size: 28px;
-  color: #8c939d;
-  width: 178px;
-  height: 178px;
-  text-align: center;
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    text-align: center;
 }
 </style>

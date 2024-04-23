@@ -84,7 +84,7 @@ export default {
             var decodedContent = atob(this.chapterContent.fileContents)
             var utf8decoder = new TextDecoder('utf-8')
             var text = utf8decoder.decode(new Uint8Array([...decodedContent].map(char => char.charCodeAt(0))))
-            this.chapterContent.FileContents = text
+            this.chapterContent.fileContents = text
         },
         handleBeforePlay(next) {
             // There are a few things you can do here...
@@ -164,7 +164,7 @@ export default {
                 :show-prev-button="false" :show-next-button="false" theme-color="#409EFF" />
         </div>
         <div class="content-wrapper">
-            <pre class="chapter-content" :style="dynStyle">{{ this.chapterContent.FileContents }}</pre>
+            <pre class="chapter-content" :style="dynStyle">{{ this.chapterContent.fileContents }}</pre>
         </div>
         <float-menu @changeStyle="(style) => dynamicStyle = style"></float-menu>
         <template #comments>

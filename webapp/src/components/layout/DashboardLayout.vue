@@ -25,9 +25,7 @@
                     </el-menu-item>
                     <el-sub-menu index="#">
                         <template #title>
-                            <el-icon>
-                                <DataBoard />
-                            </el-icon>
+                            <el-icon><Collection /></el-icon>
                             <span>Sáng tác</span>
                         </template>
                         <el-menu-item index="/dashboard/novel-management">Truyện đã đăng</el-menu-item>
@@ -71,7 +69,7 @@
     </el-container>
 </template>
 
-<script lang="ts">
+<script>
 import { mapActions, mapGetters } from 'vuex';
 export default {
     name: 'DashboardLayout',

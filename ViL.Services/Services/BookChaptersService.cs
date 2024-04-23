@@ -58,35 +58,42 @@ namespace ViL.Services.Services
                 var formData = new MultipartFormDataContent();
                 formData.Add(new StringContent(textInput), "text_file", txtFileName);
 
-                var response = client.PostAsync(flaskApiUrl, formData).Result;
-
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    // Lưu file .wav xuống máy chủ ASP.NET
-                    string folder = Path.GetDirectoryName(txtPath) ?? "..\\Data\\tmp";
-                    var path = Path.Combine(folder, "audio");
-                    if (!Directory.Exists(path))
+                    var response = client.PostAsync(flaskApiUrl, formData).Result;
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        Directory.CreateDirectory(path);
-                    }
-                    string fileName = Path.GetFileNameWithoutExtension(txtFilePath);
-                    var outputPath = Path.Combine(path, $"{fileName}.wav");
-                    using (var responseStream = response.Content.ReadAsStreamAsync().Result)
-                    {
-                        using (var fileStream = new FileStream(outputPath, FileMode.Create))
+                        // Lưu file .wav xuống máy chủ ASP.NET
+                        string folder = Path.GetDirectoryName(txtPath) ?? "..\\Data\\tmp";
+                        var path = Path.Combine(folder, "audio");
+                        if (!Directory.Exists(path))
                         {
-                            responseStream.CopyToAsync(fileStream).Wait();
+                            Directory.CreateDirectory(path);
+                        }
+                        string fileName = Path.GetFileNameWithoutExtension(txtFilePath);
+                        var outputPath = Path.Combine(path, $"{fileName}.wav");
+                        using (var responseStream = response.Content.ReadAsStreamAsync().Result)
+                        {
+                            using (var fileStream = new FileStream(outputPath, FileMode.Create))
+                            {
+                                responseStream.CopyToAsync(fileStream).Wait();
+                            }
+                        }
+                        if (uploaderId != null)
+                        {
+                            var successNotification = new Notifications((int)NotiType.Success, uploaderId, "Audio convertion success!");
                         }
                     }
-                    if (uploaderId != null)
+                    else
                     {
-                        var successNotification = new Notifications((int)NotiType.Success, uploaderId, "Audio convertion success!");
+                        // Handle error if needed
                     }
-                }
-                else
+                } catch(Exception)
                 {
-                    // Handle error if needed
-                }
+                    
+                }              
+                
             }
         }
     }

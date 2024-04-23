@@ -22,12 +22,19 @@ namespace ViL.Services.Services
         private IBookStatisticsInfoRepository _bookStatisticsInfoRepository;
         private IGenresRepository _genresRepository;
         private IUsersRepository _usersRepository;
+        private IBookChaptersRepository _bookChaptersRepository;
 
-        public BookInfoService(IBookInfoRepository bookInfoRepository, IBookStatisticsInfoRepository bookStatisticRepo, IGenresRepository genresRepo, IUsersRepository userRepo, ViLDbContext dbContext) : base(bookInfoRepository, dbContext)
+        public BookInfoService(IBookInfoRepository bookInfoRepository,
+                               IBookStatisticsInfoRepository bookStatisticRepo,
+                               IBookChaptersRepository bookChaptersRepository,
+                               IGenresRepository genresRepo,
+                               IUsersRepository userRepo,
+                               ViLDbContext dbContext) : base(bookInfoRepository, dbContext)
         {
             _bookStatisticsInfoRepository = bookStatisticRepo;
             _genresRepository = genresRepo;
             _usersRepository = userRepo;
+            _bookChaptersRepository = bookChaptersRepository;
         }
 
         public override void Add(BookInfo entity)
@@ -40,6 +47,7 @@ namespace ViL.Services.Services
         {
             base.Delete(entity);
             _bookStatisticsInfoRepository.Delete(stats => stats.BookId == entity.BookId);
+            _bookChaptersRepository.Delete(chapter => chapter.BookId == entity.BookId);
         }
 
         public override void Delete(Expression<Func<BookInfo, bool>> where)

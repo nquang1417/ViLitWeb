@@ -21,7 +21,7 @@
     </el-dialog>
 </template>
   
-<script lang="ts">
+<script>
 import { mapActions, mapGetters } from 'vuex';
 import { ElNotification } from 'element-plus'
 export default {
