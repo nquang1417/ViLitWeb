@@ -9,13 +9,13 @@ namespace ViL.Api.Models
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class ViLAuthorizeAttribute : Attribute, IAuthorizationFilter
     {
-        public  string? Role {get; set;}
-        public  string? UserId { get; set;}
+        public string? Role {get; set;}
+        public bool RequiredPossesor { get; set;}
 
         public ViLAuthorizeAttribute()
         {
             Role = null;
-            UserId = null;
+            RequiredPossesor = false;
         }
 
         public void OnAuthorization(AuthorizationFilterContext context)
@@ -57,6 +57,11 @@ namespace ViL.Api.Models
                     }
                     
                     var userId = jwtToken.Claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value;
+                    /*if (RequiredPossesor && _owner == null)
+                    {
+                        context.Result = new UnauthorizedResult();
+                        return;
+                    } else */
                     if (_owner != null)
                     {
                         var owner = _owner.ToString();

@@ -12,10 +12,12 @@ namespace ViL.Api.Controllers
     public class BookInfoController : Controller
     {
         private IBookInfoService _bookInfoService;
+        private IUserFavoriteBooksService _userFavoriteBooksService;
 
-        public BookInfoController(IBookInfoService bookInfoService)
+        public BookInfoController(IBookInfoService bookInfoService, IUserFavoriteBooksService userFavoriteBooksService)
         {
             _bookInfoService = bookInfoService;
+            _userFavoriteBooksService = userFavoriteBooksService;
         }
 
         [HttpGet("all")]
@@ -52,7 +54,7 @@ namespace ViL.Api.Controllers
         }
 
         [HttpGet("details")]
-        public IActionResult sGetBookDetails(string bookId)
+        public IActionResult GetBookDetails(string bookId)
         {
             try
             {
@@ -133,10 +135,15 @@ namespace ViL.Api.Controllers
                     condition = VilHelpers.AndAlso(condition, updloaderFilter);
                 }
 
-                var query = _bookInfoService.Get(condition).Skip(pageSize * (--page)).Take(pageSize);
+                var query = _bookInfoService.Get(condition);
                 if (query != null)
                 {
-                    return Ok(query.ToList());
+                    var result = new
+                    {
+                        Data = query.Skip(pageSize * (--page)).Take(pageSize).ToList(),
+                        Totals = query.Count()
+                    };
+                    return Ok(result);
                 } else
                 {
                     return StatusCode(204);
@@ -256,5 +263,55 @@ namespace ViL.Api.Controllers
             }
         }
 
+
+        [HttpPost("follow-book")]
+        [ViLAuthorize]
+        public IActionResult Follow(string bookId, string userId)
+        {
+            try
+            {
+                var query = _userFavoriteBooksService.Get(record => record.BookId == bookId && record.UserId == userId).FirstOrDefault();
+                if (query == null)
+                {
+                    var newRecord = new UserFavoriteBooks(bookId, userId);
+                    _userFavoriteBooksService.Add(newRecord);                    
+                } else
+                {
+                    switch (query.Status)
+                    {
+                        case 1:
+                            query.Status = 0; break;
+                        case 0:
+                            query.Status = 1; break;
+                    }
+                    _userFavoriteBooksService.Update(query);
+                }
+                return Ok();
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("has-bookmarks")]
+        [ViLAuthorize]
+        public IActionResult GetBooksHasBookmarks()
+        {
+            try
+            {
+                var userId = HttpContext.Items["UserId"]?.ToString();
+                if (userId == null)
+                {
+                    return BadRequest();
+                } else
+                {
+                    var query = _bookInfoService.GetBookHasBookmarks(userId);
+                    return Ok(query.ToList());
+                }
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

@@ -16,6 +16,7 @@ namespace ViL.Services.Services
     {
         BookDetailsDTO GetBookDetails(string id);
         IQueryable<BookDetailsDTO> GetAllDetails();
+        IQueryable<BookInfo> GetBookHasBookmarks(string userId);
     }
     public class BookInfoService : ServiceBase<BookInfo>, IBookInfoService
     {
@@ -23,18 +24,21 @@ namespace ViL.Services.Services
         private IGenresRepository _genresRepository;
         private IUsersRepository _usersRepository;
         private IBookChaptersRepository _bookChaptersRepository;
+        private IBookmarksRepository _bookmarksRepository;
 
         public BookInfoService(IBookInfoRepository bookInfoRepository,
                                IBookStatisticsInfoRepository bookStatisticRepo,
                                IBookChaptersRepository bookChaptersRepository,
                                IGenresRepository genresRepo,
                                IUsersRepository userRepo,
+                               IBookmarksRepository bookmarksRepository,
                                ViLDbContext dbContext) : base(bookInfoRepository, dbContext)
         {
             _bookStatisticsInfoRepository = bookStatisticRepo;
             _genresRepository = genresRepo;
             _usersRepository = userRepo;
             _bookChaptersRepository = bookChaptersRepository;
+            _bookmarksRepository = bookmarksRepository;
         }
 
         public override void Add(BookInfo entity)
@@ -82,6 +86,15 @@ namespace ViL.Services.Services
             }
             var bookDetails = new BookDetailsDTO(book,genre,stats,uploader);
             return bookDetails;
+        }
+
+        public IQueryable<BookInfo> GetBookHasBookmarks(string userId)
+        {
+            var bookmarks = _bookmarksRepository.Get(bm => bm.UserId == userId);
+            var query = from book in _repository.Table
+                        join bookmark in bookmarks on book.BookId equals bookmark.BookId
+                        select book;
+            return query;
         }
     }
 }

@@ -6,6 +6,10 @@ using ViL.Api.Models;
 using ViL.Common.Enums;
 using ViL.Data.Models;
 using ViL.Services.Services;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Text;
 
 namespace ViL.Api.Controllers
 {
@@ -219,8 +223,6 @@ namespace ViL.Api.Controllers
 
                     string path = query.FileName ?? string.Empty;
                     var _content = System.IO.File.ReadAllBytes(path);
-                    //byte[] bytes = Encoding.UTF8.GetBytes(_content);
-                    //_content = Convert.ToBase64String(bytes);
                     var file = File(_content, "text/plain");
                     return Ok(new {Chapter = query, File = file});
                 }
@@ -229,6 +231,29 @@ namespace ViL.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("get-audio")]
+        public IActionResult GetAudio(string chapterId)
+        {
+            try
+            {
+                var query = _bookChaptersService.GetById(chapterId);
+                if (query == null)
+                {
+                    return StatusCode(204);
+                }
+                else
+                {
+                    string path = $"..\\Data\\{query.BookId}\\audio";
+                    string filename = $"{query.ChapterNum.ToString()?.PadLeft(5, '0')}.wav";
+                    var fileBytes = System.IO.File.ReadAllBytes(Path.Combine(path, filename));
+                    return File(fileBytes, "audio/wav");
+                }              
+            } catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
 
         [HttpGet("new-chapter")]
         [ViLAuthorize]
@@ -264,10 +289,9 @@ namespace ViL.Api.Controllers
             try
             {
                 var uploader = HttpContext.Items["UserId"]?.ToString();
-                //var newChapter = new BookChapters(entity.BookId, entity.ChapterNum, uploader, entity.ChapterTitle);
                 _bookChaptersService.Add(entity);
+                
                 return StatusCode(201, entity);
-
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -294,8 +318,10 @@ namespace ViL.Api.Controllers
                 {
                     await file.CopyToAsync(stream);
                 }
-
-                //BackgroundJob.Enqueue(() => _bookChaptersService.ProcessAudioAsync(folderPath, fileName, newChapter.UploaderId));
+                if (newChapter.Status == 1)
+                {
+                    //BackgroundJob.Enqueue(() => _bookChaptersService.ProcessAudioAsync(folderPath, fileName, newChapter.UploaderId));
+                }
                 return StatusCode(201);
             } catch (Exception ex)
             {

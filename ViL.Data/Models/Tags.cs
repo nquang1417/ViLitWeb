@@ -19,7 +19,7 @@ namespace ViL.Data.Models
             Description = "";
         }
 
-        public Tags(string tagName, string? description = "")
+        public Tags(string tagName, string? description = "") : base() 
         {
             TagId = Guid.NewGuid().ToString();
             TagName = tagName;

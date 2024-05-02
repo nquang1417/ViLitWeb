@@ -21,6 +21,26 @@ namespace ViL.Api.Models
         public TimeSpan? HourReading { get; set; }
         public string? Url { get; set; }
 
+        public UserInfo() : base()
+        {
+            UserId = string.Empty;
+            Username = string.Empty;
+            Role = 1;
+            DisplayName = string.Empty;
+            Avatar = string.Empty;
+            Cover = string.Empty;
+            Gender = 0;
+            Email = string.Empty;
+            Location = string.Empty;
+            About = null;
+            Coins = 0;
+            Comments = 0;
+            UploadItems = 0;
+            FollowingItems = 0;
+            HourReading = null;
+            Url = null;            
+        }
+
         public UserInfo(Users user)
         {
             UserId = user.UserId;

@@ -21,7 +21,7 @@ namespace ViL.Data.Models
             UserId = "";
         }
 
-        public UserFavoriteBooks(string bookId = "", string userId = "") : base()
+        public UserFavoriteBooks(string bookId = "", string userId = "") : base(status: 1, creaeteBy: userId, updateBy: userId)
         {
             BookId = bookId;
             UserId = userId;

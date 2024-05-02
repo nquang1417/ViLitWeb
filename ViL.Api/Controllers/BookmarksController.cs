@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Linq.Expressions;
 using ViL.Api.Models;
+using ViL.Common.Commons;
 using ViL.Data.Models;
 using ViL.Services.Services;
 
@@ -18,11 +20,11 @@ namespace ViL.Api.Controllers
 
         [HttpPost("new-bookmark")]
         [ViLAuthorize]
-        public IActionResult AddBookmark(string userId, string chapterId)
+        public IActionResult AddBookmark(Bookmarks entity)
         {
             try
             {
-                var newBookmark = new Bookmarks(userId, chapterId);
+                var newBookmark = new Bookmarks(entity.UserId, entity.BookId, entity.ChapterId);
                 _bookmarksService.Add(newBookmark);
                 return Ok(newBookmark);
             } catch (Exception ex)
@@ -40,6 +42,44 @@ namespace ViL.Api.Controllers
             {
                 var query = _bookmarksService.Get(bm => bm.UserId == userId);
                 return Ok(query.ToList());
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("filter")]
+        [ViLAuthorize]
+        public IActionResult filter(FilterBookmark filter, int page = 1)
+        {
+            try
+            {
+                int pageSize = 20;
+                Expression<Func<Bookmarks, bool>> filterExp = bm => true;
+                if (filter.UserId != null && filter.UserId != "")
+                {
+                    Expression<Func<Bookmarks, bool>> filterUserid = bm => bm.UserId == filter.UserId;
+                    VilHelpers.AndAlso(filterExp, filterUserid);
+                }
+                if (filter.BookId != null && filter.BookId != "")
+                {
+                    Expression<Func<Bookmarks, bool>> filterBook = bm => bm.BookId == filter.BookId;
+                    VilHelpers.AndAlso(filterExp, filterBook);
+                }
+
+                var query = _bookmarksService.Get(filterExp);
+                if (query != null)
+                {
+                    var result = new
+                    {
+                        Data = query.Skip(pageSize * (--page)).Take(pageSize).ToList(),
+                        Totals = query.Count()
+                    };
+                    return Ok(result);
+                } else
+                {
+                    return StatusCode(204);
+                }
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);

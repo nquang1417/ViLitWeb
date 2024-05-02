@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq.Expressions;
 using ViL.Api.Models;
+using ViL.Common.Enums;
 using ViL.Common.Exceptions;
 using ViL.Data;
 using ViL.Data.Models;
@@ -11,7 +13,6 @@ using ViL.Services.Services;
 namespace ViL.Api.Controllers
 {
     [ApiController]
-
     [Route("api/[controller]")]
     public class UsersController : Controller
     {
@@ -141,6 +142,7 @@ namespace ViL.Api.Controllers
         }
 
         [HttpDelete("delete")]
+        [ViLAuthorize]
         public IActionResult Delete(string id)
         {
             try
@@ -150,8 +152,29 @@ namespace ViL.Api.Controllers
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
+            }            
+        }
+
+        [HttpPut("change-status")]
+        [ViLAuthorize]
+        public IActionResult ChangeStatus(string userid, int status)
+        {
+            try
+            {
+                var query = _usersService.GetById(userid);
+                if (query != null)
+                {
+                    query.Status = status;
+                    _usersService.Update(query);
+                    return Ok();
+                } else
+                {
+                    return BadRequest();
+                }
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
-            
         }
 
         [HttpPut("change-password")]
@@ -178,6 +201,53 @@ namespace ViL.Api.Controllers
             {
                 return BadRequest(ex.Message);
             }            
+        }
+
+        [HttpPut("ban-user")]
+        [ViLAuthorize(Role = "Admin")]
+        public IActionResult BanUser(string userId, DateTime expired)
+        {
+            try
+            {
+                var query = _usersService.GetById(userId);
+                if (query != null)
+                {
+                    query.Status = (int)UserStatus.Banned;
+                    query.BannedExpired = expired;
+
+                    // BackgroundJob.Schedule(() => _usersService.UnlockUser(userId), expired);
+                }
+                return Ok();
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("unlock-user")]
+        [ViLAuthorize(Role = "Admin")]
+        public IActionResult UnlockUser(string userId)
+        {
+            try
+            {
+                var query = _usersService.GetById(userId);
+                if (query != null)
+                {
+                    if (query.Status == (int)UserStatus.Banned)
+                    {
+                        query.Status = (int)UserStatus.Active;
+                        query.BannedExpired = null;
+                    }
+                    return Ok();
+                } else
+                {
+                    return NotFound();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

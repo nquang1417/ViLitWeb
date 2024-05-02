@@ -36,7 +36,7 @@ namespace ViL.Data.Models
             ChapterNum = chapterNo;
             Images = string.Empty;
             FileName = $"..\\Data\\{bookId}\\text\\{chapterNo.ToString()?.PadLeft(5,'0')}.txt";
-            Url = bookId;
+            Url = $"..\\Data\\{bookId}";
             UploaderId = uploaderId;
             Views = 0;
             Comments = 0;

@@ -257,6 +257,10 @@ namespace ViL.Data.Migrations
                     b.Property<string>("BookmarkId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("BookId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("BookmarkLine")
                         .HasColumnType("int");
 
@@ -511,6 +515,9 @@ namespace ViL.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetType")
                         .HasColumnType("int");
 
                     b.Property<string>("UpdateBy")
