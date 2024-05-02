@@ -1,15 +1,21 @@
 <script lang="js">
 import axios from 'axios'
+import { inject } from 'vue'
 export default {
     name: 'HomePage',
     data() {
         return {
             // novels: [],
-            novels: []
+            novels: [],
         }
     },
     mounted() {
         this.loadNovel()
+    },
+    computed: {
+        $api() {
+            return inject('$api')
+        }
     },
     methods: {
         async loadNovel() {
@@ -57,13 +63,6 @@ export default {
 
 <template>
     <layout-default>
-        <!-- <el-row :gutter="64">
-            <el-col :span="24">
-                <span class="demonstration">Nổi bật</span>
-                <BaseCarousel></BaseCarousel>
-            </el-col>
-            
-        </el-row> -->
         <span class="demonstration">Mới cập nhật</span>
         <el-row :gutter="20">
             <el-col v-for="(novel, index) in novels" :key="novel.bookId" :xs="10" :sm="8" :md="6" :lg="4" :xl="6" >

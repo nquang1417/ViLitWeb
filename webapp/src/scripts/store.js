@@ -1,12 +1,12 @@
 import { createStore } from "vuex"
-import { comparePassword } from "./utils/passwordUtils"
 import authModule from './modules/auth'
 import novelModule from './modules/novel'
+import { inject } from "vue"
 
 const store = createStore({
     modules: {
         auth: authModule,
-        novel: novelModule,        
+        novel: novelModule,       
     },
 })
 

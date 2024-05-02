@@ -3,6 +3,7 @@ import axios from 'axios'
 import dayjs from "dayjs"
 import { mapActions, mapGetters } from 'vuex'
 import { getRemainingTime, getBookStatusStr } from '../../scripts/utils/utils'
+import { inject } from 'vue'
 
 export default {
     name: 'NovelWorkspace',
@@ -32,8 +33,9 @@ export default {
         }
     },
     mounted() {
-        this.loadNovel()
-        this.loadDrafts(1)
+        this.loadNovel().then(() => {
+            this.loadDrafts(1)
+        })
     },
     props: ['novelId'],
     computed: {
@@ -43,7 +45,10 @@ export default {
         ...mapGetters('auth', {
             getterLoginStatus: 'getLoginStatus',
             gettersAuthData: 'getAuthData'
-        })
+        }),
+        $api() {
+            return inject('$api')
+        }
     },
     watch: {
     },
@@ -53,38 +58,22 @@ export default {
             selectChapter: 'updateChapter'
         }),
         async loadNovel() {
-            var url = `http://localhost:10454/api/BookInfo/details?bookId=${this.novelId}`
-            await axios.get(url)
+            await this.$api.novels.getDetails(this.novelId)
                 .then(response => {
                     this.novel = JSON.parse(JSON.stringify(response.data))
                     this.totalItems = this.novel.chapters
-                    // var decodedContent = atob(this.novel.Cover.FileContents);
-
-                    // Convert decoded content to a Uint8Array
-                    // var uint8Array = new Uint8Array(decodedContent.length);
-                    // for (var i = 0; i < decodedContent.length; i++) {
-                    //     uint8Array[i] = decodedContent.charCodeAt(i);
-                    // }
-
-                    // Create a Blob from the Uint8Array
-                    // var blob = new Blob([uint8Array], { type: 'image/jpeg' });
-
-                    // Create a data URL for the Blob
-
-                    // this.novel.CoverUrl = URL.createObjectURL(blob);
                 })
                 .catch(e => {
                     console.error(e);
                 })
             this.lastUpdate = getRemainingTime(this.novel.updateDate)
             this.novelStatus = getBookStatusStr(this.novel.status)
-            this.novel.CoverUrl = this.novel.bookCover
+            this.novel.CoverUrl = this.novel.bookCover            
             this.saveNovel(this.novel)
         },
         async loadChapters(page) {
             this.loading = true
-            var url = `http://localhost:10454/api/BookChapters/get-chapters?bookId=${this.novelId}&page=${page}`
-            await axios.get(url)
+            await this.$api.chapters.getChapters(this.novelId, page)
                 .then(response => {
                     if (response.status == 200) {
                         this.chapters = JSON.parse(JSON.stringify(response.data.data.map(item => {
@@ -101,99 +90,130 @@ export default {
             this.loading = false
         },
         async loadDrafts(page) {
-            this.loading = true
-            var url = `http://localhost:10454/api/BookChapters/get-drafts?bookId=${this.novelId}&page=${page}`
-            await axios.get(url, {
-                headers: {
-                    'access_token': `${this.gettersAuthData.token}`
-                }
-            }).then(response => {
-                if (response.status == 200) {
-                    this.drafts = JSON.parse(JSON.stringify(response.data.data.map(item => {
-                        item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
-                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
-                        return item;
-                    })));
-                    this.totalDrafts = response.data.totals
-                }
+            this.loading = true            
+            await this.$api.chapters.getDrafts(this.novelId, page, this.gettersAuthData.token, this.novel.uploaderId)
+                .then(response => {
+                    if (response.status == 200) {
+                        this.drafts = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                            item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
+                            item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
+                            return item;
+                        })));
+                        this.totalDrafts = response.data.totals
+                    }
 
-            }).catch(e => {
+                }).catch(e => {
                     console.error(e);
-            })
+                })
             this.loading = false
         },
-        async update() {
-            try {
-                var url = `http://localhost:10454/api/BookInfo/update?bookId=${this.novel.bookId}`
-                var respone = await axios.put(url, this.novel, {
-                    headers: {
-                        'Content-Type': 'application/json-patch+json'
+        async loadDeleteds(page) {
+            this.loading = true   
+            await this.$api.chapters.getDeleteds(this.novelId, page, this.gettersAuthData.token, this.novel.uploaderId)
+                .then(response => {
+                    if (response.status == 200) {
+                        this.trashs = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                            item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm");
+                            item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm");
+                            return item;
+                        })));
+                        this.totalTrashs = response.data.totals
                     }
+
+                }).catch(e => {
+                    console.error(e);
                 })
-                // this.uploadCover()
-            } catch (error) {
-                console.error(error)
-            }
+            this.loading = false
+        },
+        async update(entity) {
+            await this.$api.novels.updateNovel(entity.bookId, entity, this.gettersAuthData.token, entity.uploaderId)
+                .then(() => {
+                    this.saveNovel(entity)
+                })
+                .catch((error) => {
+                    console.error(error)
+                })            
         },
         async changeStatus(entity, status) {
-            var url = `http://localhost:10454/api/BookChapters/change-status?chapterId=${entity.chapterId}&status=${status}`
-            await axios.put(url)
-                .then(response => {
-
-                })
-                .catch(error => {
-                    console.log(error)
+            var token = this.gettersAuthData.token
+            var owner = this.novel.uploaderId
+            await this.$api.chapters.changeStatus(entity.chapterId, status, token, owner)
+                .then((response) => { return response})
+                .catch((error) => {
+                    console.error(error)
                 })
         },
+
         //==== Pagination Publish tab
         handleChapterChange(val) {
             this.loadChapters(val)
         },
-        handleChapterRowClick(row) {
-            console.log(row.ChapterId)
-            var url = `/dashboard/edit-chapter/${row.chapterId}`
-            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
-            this.$router.push(url);
+        handleChapterRowClick(row, col) {
+            if (col.no != 2) {
+                var url = `/dashboard/edit-chapter/${row.chapterId}`
+                this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
+                this.$router.push(url);
+            }
         },
         handleChapterEdit(index, row) {
-            var novelName = row.Url.replaceAll(' ', '-')
+            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
             this.$router.push(`/dashboard/edit-chapter/${row.chapterId}`)
         },
         handleChapterDelete(index, row) {
-            this.changeStatus(row, 2)
+            this.novel.chapters--
+            this.changeStatus(row, 2).then(() => {
+                if (this.trashs.length > 0) {
+                    this.loadDeleteds(1)
+                }
+                this.update(this.novel)
+            })
+            this.chapters = this.chapters.filter(chapter => chapter.chapterId != row.chapterId)
         },
+
         //====
         //==== Pagination Drafts tab
         handleDraftsChange(val) {
             this.loadDrafts(val)
         },
-        handleDraftsRowClick(row) {
-            // var url = `/${this.novel.BookId}/${novelName}/${chatperId}/${chapterTitle}`
-            var url = `/dashboard/edit-chapter/${row.chapterId}`
-            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
-            this.$router.push(url);
+        handleDraftsRowClick(row, col) {            
+            if (col.no != 2) {
+                var url = `/dashboard/edit-chapter/${row.chapterId}`
+                this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
+                this.$router.push(url);
+            }
         },
         handleDraftsPublish(index, row) {
             this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
             this.$router.push(`/dashboard/edit-chapter/${row.chapterId}`)
         },
         handleDraftsDelete(index, row) {
-            
+            this.changeStatus(row, 2).then(() => {
+                if (this.trashs.length > 0) {
+                    this.loadDeleteds(1)
+                }
+            })
+            this.drafts = this.drafts.filter(draft => draft.chapterId != row.chapterId)            
         },
         //====
         //==== Pagination Drafts tab
         handleTrashsChange(val) {
             this.loadDrafts(val)
         },
-        handleTrashsRowClick(row) {
-            console.log(row.ChapterId)
-            // var url = `/${this.novel.BookId}/${novelName}/${chatperId}/${chapterTitle}`
-            var url = `/dashboard/edit-chapter/${row.chapterId}`
-            this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
-            this.$router.push(url);
+        handleTrashsRowClick(row, col) {
+            if (col.no != 2) {
+                var url = `/dashboard/edit-chapter/${row.chapterId}`
+                this.selectChapter({ chapterId: row.chapterId, chapterTitle: row.chapterTitle, chapterNum: row.chapterNum })
+                this.$router.push(url);
+            }
         },
         handleTrashsRestore(index, row) {
-            this.$router.push(`/dashboard/edit-chapter/${row.chapterId}`)
+            this.changeStatus(row, 0).then(() => {
+                if (this.drafts.length > 0) {
+                    this.loadDrafts(1)
+                }
+            })
+            this.trashs = this.trashs.filter(trash => trash.chapterId != row.chapterId)
+            
         },
         handleTrashsClear(index, row) {
             
@@ -209,10 +229,14 @@ export default {
                 if (this.drafts.length == 0) {
                     this.loadDrafts(1)
                 }
-            }            
+            } else if (tab.paneName === 'trash') {
+                if (this.trashs.length == 0) {
+                    this.loadDeleteds(1)
+                }
+            }       
         },
         beforeCloseDialog() {
-            this.update()
+            this.update(this.novel)
             // console.log(this.novel.Description)
             this.dialogFormVisible = false
         },
@@ -336,17 +360,21 @@ export default {
                             <el-container class="main-item">
                                 <el-main class="chapter-index">
                                     <el-table :data="drafts" stripe style="width: 100%" :show-header="false"
-                                        v-loading="loading" @row-click="handleDraftsRowClick" @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave">
+                                        v-loading="loading" @row-click="handleDraftsRowClick"
+                                        @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave"
+                                        :default-sort="{ prop: 'chapterNum', order: 'ascending' }">
+                                        <el-table-column prop="chapterNum"  label="STT" :align="'left'" sortable 
+                                            width="80" />
                                         <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'"> 
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" sortable :align="'right'">
                                             <template #default="scope">
                                                 <div class="edit-options" v-if="scope.row.hovered">
                                                     <el-button size="small" plain
-                                                    @click="handleDraftsPublish(scope.$index, scope.row)">Publish</el-button>
-                                                <el-button size="small" type="danger" plain
-                                                    @click="handleDraftsDelete(scope.$index, scope.row)">Delete</el-button>
-                                                </div>                                                
+                                                        @click="handleDraftsPublish(scope.$index, scope.row)">Publish</el-button>
+                                                    <el-button size="small" type="danger" plain
+                                                        @click="handleDraftsDelete(scope.$index, scope.row)">Delete</el-button>
+                                                </div>
                                             </template>
                                         </el-table-column>
                                         <template #empty>
@@ -368,10 +396,15 @@ export default {
                             <el-container class="main-item">
                                 <el-main class="chapter-index">
                                     <el-table :data="chapters" stripe style="width: 100%" :show-header="false"
-                                        v-loading="loading" @row-click="handleChapterRowClick" row-class-name="chapter-row" @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave">
+                                        v-loading="loading" @row-click="handleChapterRowClick"
+                                        row-class-name="chapter-row" @cell-mouse-enter="mouseEnter"
+                                        @cell-mouse-leave="mouseLeave" 
+                                        :default-sort="{ prop: 'chapterNum', order: 'ascending' }">
+                                        <el-table-column prop="chapterNum"  label="STT" :align="'left'" sortable 
+                                            width="80" />
                                         <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'">
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'" sortable>
                                             <template #default="scope">
                                                 <div class="edit-options" v-if="scope.row.hovered">
                                                     <el-button size="small" plain
@@ -396,21 +429,26 @@ export default {
                             </el-container>
                         </el-tab-pane>
 
-                        <el-tab-pane label="Thùng rác" name="Trash">
+                        <el-tab-pane label="Thùng rác" name="trash">
                             <el-container class="main-item">
                                 <el-main class="chapter-index">
-                                    <el-table stripe style="width: 100%" :show-header="false" v-loading="loading" @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave">
+                                    <el-table :data="trashs" stripe style="width: 100%" :show-header="false"
+                                        v-loading="loading" @row-click="handleChapterRowClick"
+                                        @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave"
+                                        :default-sort="{ prop: 'chapterNum', order: 'ascending' }">
+                                        <el-table-column prop="chapterNum"  label="STT" :align="'left'" sortable 
+                                            width="80" />
                                         <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'">
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'" sortable>
                                             <template #default="scope">
                                                 <div class="edit-options" v-if="scope.row.hovered">
                                                     <el-button size="small" plain
                                                         @click="handleChapterEdit(scope.$index, scope.row)">Edit</el-button>
-                                                    <el-button size="small" type="danger" plain
-                                                        @click="handleChapterDelete(scope.$index, scope.row)">Delete</el-button>
+                                                    <el-button size="small" type="primary" plain
+                                                        @click="handleTrashsRestore(scope.$index, scope.row)">Restore</el-button>
                                                 </div>
-                                            </template>    
+                                            </template>
                                         </el-table-column>
                                         <template #empty>
                                             Thùng rác rỗng

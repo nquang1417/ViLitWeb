@@ -1,7 +1,7 @@
 <script>
 import axios from 'axios'
-import { el } from 'element-plus/es/locale/index.mjs';
-import { mapActions, mapGetters } from 'vuex';
+import { inject } from 'vue'
+import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'TheHeader',
     data() {
@@ -11,6 +11,9 @@ export default {
             genres: [],
             homeRoute: "/",
             errors: [],
+            searchResults: [],
+            searchQuery: null,
+            loading: false,
         }
     },
     props: {
@@ -32,14 +35,15 @@ export default {
             default: false
         }
     },
-    computed: {
+    computed: {        
         ...mapGetters('auth', {
             getterLoginStatus: 'getLoginStatus',
             gettersAuthData: 'getAuthData',
             getterActiveToken: 'isTokenActive'
-        })
+        }),    
     },
-    created() {
+    mounted() {
+        this.$api = inject('$api')
         if (!this.dashboard && !this.admin) {
             this.loadGenres();
         }
@@ -71,6 +75,7 @@ export default {
             }
         },
         async loadGenres() {
+            console.log(this)
             var url = `http://localhost:10454/api/Genres/lists`;
             await axios.get(url)
             .then(response => {
@@ -79,21 +84,46 @@ export default {
             .catch(e => {
                 this.errors.push(e)
             })
+        },
+        async search(query) {
+            if (query !== '') {
+                this.loading = true
+                await this.$api.novels.search(query)
+                    .then(response => {
+                        this.searchResults = response.data.map(book => ({
+                            key: book.bookId,
+                            value: book.bookId,
+                            label: book.bookTitle
+                        }))
+                        this.loading = false                        
+                    })
+                    .catch(error => {
+                        console.error(error)
+                    })
+            } else {
+                this.searchResults = []
+            }            
         }
-
     },
 }
 </script>
 
 <template>
     <el-header :class="classList" :height="`${height}px`">
-        <el-menu :default-active="this.$route.path"  class="el-menu-demo" mode="horizontal" :ellipsis="false" :router="true">
+        <el-menu :default-active="this.$route.path" class="el-menu-demo" mode="horizontal" :ellipsis="false"
+            :router="true">
             <el-menu-item :index="homeRoute" class="logo">
                 <img src="@/assets/logo/logo.png" :height="height">
             </el-menu-item>
             <div class="flex-grow"></div>
             <div class="searchBar" index="/Search" v-if="!reading && !dashboard && !admin">
-                <el-autocomplete placeholder="Tìm kiếm"></el-autocomplete>
+                <!-- <el-autocomplete v-model="searchQuery" :fetch-suggestions="search"
+                    placeholder="Tìm kiếm"></el-autocomplete> -->
+                <el-select-v2 v-model="searchQuery" style="width: 240px" filterable clearable
+                    :options="this.searchResults" remote :remote-method="search" :loading="loading"
+                    @change="this.$router.push(`novel/${searchQuery}`)"
+                    placeholder="Tìm kiếm ...">                    
+                </el-select-v2>
             </div>
             <el-sub-menu index="/danh-muc" v-if="!dashboard && !admin">
                 <template #title>Danh mục</template>
@@ -102,7 +132,8 @@ export default {
             </el-sub-menu>
             <el-menu-item index="/dashboard" v-if="!dashboard && !admin">Sáng tác</el-menu-item>
             <el-menu-item index="/xep-hang" v-if="!dashboard && !admin">Xếp hạng</el-menu-item>
-            <el-menu-item class="signInBtn" v-if="!getterLoginStatus" style="align-self: center;" @click="dialogFormVisible = true">
+            <el-menu-item class="signInBtn" v-if="!getterLoginStatus" style="align-self: center;"
+                @click="dialogFormVisible = true">
                 <template #title>Đăng nhập</template>
             </el-menu-item>
             <el-sub-menu index="6" v-if="getterLoginStatus && !admin">
@@ -129,7 +160,7 @@ export default {
     flex-grow: 1;
 }
 .el-header {
-    z-index: 1;
+    z-index: 1000;
     padding: 0;
     position: sticky;
     top: 0px;

@@ -1,9 +1,10 @@
+import { inject } from "vue";
 import { tokenAlive } from "../../shared/jwtHelper";
 import { jwtDecrypt } from "../../shared/jwtHelper";
 
 const state = () => {
   const token = localStorage.getItem('access_token');
-  var jwtDecodedValue = token ? jwtDecrypt(token) : null;
+  var jwtDecodedValue = token ? jwtDecrypt(token) : null;    
   // var jwtDecodedValue = token ? jwtDecode(token) : null;
 
   if (jwtDecodedValue && !tokenAlive(jwtDecodedValue.exp, jwtDecodedValue.role)) {
@@ -21,6 +22,7 @@ const state = () => {
       role: jwtDecodedValue ? jwtDecodedValue.role : "",
     },
     loginStatus: jwtDecodedValue ? tokenAlive(jwtDecodedValue.exp, jwtDecodedValue.role) : false,
+    
   }
 };
 
@@ -40,6 +42,8 @@ const getters = {
 };
 
 import axios from 'axios'
+
+
 const actions = {
   async login({ commit }, payload) {
     const response = await axios

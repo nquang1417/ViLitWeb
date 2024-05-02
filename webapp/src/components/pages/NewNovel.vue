@@ -187,6 +187,7 @@ export default {
         },
         beforeUpload(rawFile) {
             // this.coverUrl = URL.createObjectURL(rawFile.raw);
+            // var url  = URL.createObjectURL(rawFile.raw)
             this.coverFile = rawFile
             if (rawFile.type !== 'image/jpeg') {
                 this.$message.error('Định dạng ảnh bìa phải là jpg!');

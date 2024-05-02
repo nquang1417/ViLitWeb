@@ -367,3 +367,4 @@ FodyWeavers.xsd
 /vietTTS/test_data/
 /vietTTS/assets/infore/hifigan
 /vietTTS/assets/infore/nat
+/vietTTS/assets/infore/*.wav

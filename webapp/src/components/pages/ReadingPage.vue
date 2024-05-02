@@ -2,6 +2,7 @@
 import axios from 'axios'
 import { pad } from '../../scripts/utils/utils.js'
 import { mapActions, mapGetters } from 'vuex'
+import { inject } from 'vue'
 
 export default {
     name: 'ReadingPage',
@@ -18,6 +19,7 @@ export default {
             chapter: {},
             chapterContent: {},
             audioList: [],
+            audioChapter: null,
             currentChapter: {
                 key: '',
                 value: 0,
@@ -27,7 +29,7 @@ export default {
             next: 0,
         }
     },
-    created() {
+    mounted() {
         this.loadChapter()
         this.loadNovel()
     },
@@ -47,10 +49,13 @@ export default {
                 false
             }
         },
+        $api() {
+            return inject('$api')
+        },
         ...mapGetters('novel', {
             getNovel: 'getNovelInfo',
             getChapter: 'getChapterInfo'
-        })
+        }),
     },
     props: ['title', 'chapterId', 'chapterNo'],
     watch: {
@@ -65,26 +70,38 @@ export default {
         }),
         async loadChapter() {
             var id = this.getChapter.chapterId
-            console.log(id)
-            
+            console.log(this.$api)
+
             var url = `http://localhost:10454/api/BookChapters/get-chapter?chapterId=${id}`
             await axios.get(url)
                 .then(response => {
                     this.chapter = response.data.chapter
-                    this.chapterContent = response.data.file
+                    this.chapterContent.file = response.data.file.fileContents
                     this.currentChapter.key = response.data.chapter.chapterId
                     this.currentChapter.value = response.data.chapter.chapterNum
                     this.currentChapter.label = response.data.chapter.chapterTitle
                     this.prev = this.currentChapter.value - 1
                     this.next = this.currentChapter.value + 1
+                    return this.$api.chapters.getChapterAudio(id)
+                })
+                .then(response => {
+                    var audioContent = new Blob([response.data], { type: 'audio/wav' })
+                    var url = URL.createObjectURL(audioContent);
+                    this.chapter.audio = url
+                    this.audioList.push({
+                        name: `${this.chapter.chapterTitle}`,
+                        url: url
+                    })
                 })
                 .catch(e => {
                     console.error(e)
                 })
-            var decodedContent = atob(this.chapterContent.fileContents)
+            var decodedContent = atob(this.chapterContent.file)
             var utf8decoder = new TextDecoder('utf-8')
+            
             var text = utf8decoder.decode(new Uint8Array([...decodedContent].map(char => char.charCodeAt(0))))
             this.chapterContent.fileContents = text
+            
         },
         handleBeforePlay(next) {
             // There are a few things you can do here...
@@ -157,14 +174,18 @@ export default {
                     </el-option>
                 </el-select> -->
                 <el-button class="next" type="primary" @click="nextChapter">Chương sau</el-button>
+
             </div>
         </template>
         <div class="audio">
-            <audio-player ref="audioPlayer" :audio-list="audioList" :before-play="handleBeforePlay"
-                :show-prev-button="false" :show-next-button="false" theme-color="#409EFF" />
+            <!-- <audio-player ref="audioPlayer" :audio-list="this.audioList.map(elm => elm.url)" :before-play="handleBeforePlay"
+                :show-prev-button="false" :show-next-button="false" theme-color="#409EFF" />                 -->
+            <audio controls :src="this.chapter.audio" type="audio/wav"></audio>
         </div>
-        <div class="content-wrapper">
+        <!-- <div class="content-wrapper">
             <pre class="chapter-content" :style="dynStyle">{{ this.chapterContent.fileContents }}</pre>
+        </div> -->
+        <div class="content-wrapper" :style="dynStyle"  v-html="this.chapterContent.fileContents">
         </div>
         <float-menu @changeStyle="(style) => dynamicStyle = style"></float-menu>
         <template #comments>
