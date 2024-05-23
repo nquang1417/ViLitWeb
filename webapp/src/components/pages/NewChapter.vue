@@ -1,5 +1,5 @@
 <script lang="js">
-import { ElNotification } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { mapActions, mapGetters } from 'vuex'
 import dayjs from "dayjs"
 import { ref,inject } from 'vue'
@@ -98,12 +98,7 @@ export default {
         ...mapActions('novel', {
             saveNovel: 'updateNovel'
         }),
-        loadContent() {
-            console.log(this.quill)
-            console.log(this.quill.getContents())
-            console.log(Quill.imports['modules/htmlEditButton']);
-        },
-        async getNewChapter() {
+        async getNewChapter() {            
             await this.$api.chapters.getNewChapter(this.getNovel.bookId, this.gettersAuthData.token)
                 .then(response => {
                     this.chapter = response.data
@@ -114,7 +109,9 @@ export default {
                 })
         },
         async loadChapter() {
-            await this.$api.chapters.getChapterById(this.chapterId)
+            var token = this.gettersAuthData.token
+            var owner = this.novel.uploaderId
+            await this.$api.chapters.editChapterById(this.chapterId, token, owner)
                 .then(response => {
                     this.chapter = response.data.chapter
                     this.chapterFileContent = response.data.file
@@ -149,16 +146,16 @@ export default {
                             var owner = this.novel.uploaderId
                             return this.$api.chapters.uploadChapter(this.chapter, this.chapterContent.text, token, owner)
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                     }).then(response => {
                         if (response.status == 201) {
                             if (oldStatus == 1) {
                                 this.updateNovel()
                             }
-                            ElNotification({ title: 'Thành công', message: 'Cập nhật thành công!', type: 'success' })
+                            ElMessage({message: 'Cập nhật thành công!', type: 'success', duration: 1500 })
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                         this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
                     })
@@ -176,13 +173,13 @@ export default {
                             var owner = this.novel.uploaderId
                             return this.$api.chapters.uploadChapter(this.chapter, this.chapterContent.text, token, owner)
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                     }).then(response => {
                         if (response.status == 201) {
-                            ElNotification({ title: 'Thành công', message: 'Đã lưu bản nháp mới!', type: 'success' })
+                            ElMessage({message: 'Đã lưu bản nháp mới!', type: 'success', duration: 1500 })
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error', })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                         this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
                     })
@@ -210,16 +207,16 @@ export default {
                             var owner = this.novel.uploaderId
                             return this.$api.chapters.uploadChapter(this.chapter, this.chapterContent.text, token, owner)
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error', })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                     }).then(response => {
                         if (response.status == 201) {
-                            ElNotification({ title: 'Thành công', message: 'Xuất bản chương mới thành công!', type: 'success' })
+                            ElMessage({message: 'Xuất bản chương mới thành công!', type: 'success', duration: 1500 })
                             if (oldStatus != 1) {
                                 this.updateNovel()
                             }
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                         this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
                     }).catch(error => {
@@ -237,14 +234,14 @@ export default {
                             var owner = this.novel.uploaderId
                             return this.$api.chapters.uploadChapter(this.chapter, this.chapterContent.text, token, owner)
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                     }).then(response => {
                         if (response.status == 201) {
                             this.updateNovel()
-                            ElNotification({ title: 'Thành công', message: 'Xuất bản chương mới thành công!', type: 'success' })
+                            ElMessage({message: 'Xuất bản chương mới thành công!', type: 'success', duration: 1500 })
                         } else {
-                            ElNotification({ title: 'Lỗi', message: 'Đã có lỗi xảy ra!!', type: 'error' })
+                            ElMessage({message: 'Đã có lỗi xảy ra!!', type: 'error', duration: 1500 })
                         }
                         this.$router.push(`/dashboard/workspace/${this.getNovel.bookId}`)
                     })
@@ -285,7 +282,7 @@ export default {
     <dashboard-layout>
         <template #header-content>Chương mới</template>
         <template #header-extra>
-            <el-button type="default" plain icon="CollectionTag" @click="loadContent">load</el-button>
+            <!-- <el-button type="default" plain icon="CollectionTag" @click="loadContent">load</el-button> -->
             <el-button type="default" plain icon="CollectionTag" @click="saveChapter">Lưu</el-button>
             <el-button type="primary" icon="Check" @click="publishChapter">Xuất bản</el-button>
         </template>
@@ -326,6 +323,7 @@ export default {
     border-radius: 6px;
     margin: 20px;
     height: calc(100vh - 50px);
+    
 }
 
 .editor .el-main {
@@ -333,6 +331,7 @@ export default {
     position: relative;
     /* max-height: calc(100vh - 50px); */
     overflow: clip;
+    background-color: #fff !important;
 }
 
 .el-form {
@@ -340,6 +339,6 @@ export default {
 }
 
 :deep(.ql-container) {
-    max-height: 100%;
+    max-height: 93%;
 }
 </style>

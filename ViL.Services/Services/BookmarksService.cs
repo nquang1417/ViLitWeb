@@ -1,4 +1,5 @@
-﻿using ViL.Common.Exceptions;
+﻿using System.Linq.Expressions;
+using ViL.Common.Exceptions;
 using ViL.Data;
 using ViL.Data.Models;
 using ViL.Data.Repositories;
@@ -12,10 +13,19 @@ namespace ViL.Services.Services
 
     public class BookmarksService : ServiceBase<Bookmarks>, IBookmarksService
     {
+        private IBookChaptersRepository _chaptersRepository;
 
-        public BookmarksService(IBookmarksRepository repository, ViLDbContext dbContext) : base(repository, dbContext)
+        public BookmarksService(IBookmarksRepository repository,
+                                IBookChaptersRepository chaptersRepository,
+                                ViLDbContext dbContext) : base(repository, dbContext)
         {
+            _chaptersRepository = chaptersRepository;
         }
+
+        /*public override IQueryable<Bookmarks> Get(Expression<Func<Bookmarks, bool>> where)
+        {
+            var bookmarks = _repository.Get(where);
+        }*/
 
         protected override bool validate(Bookmarks entity, bool isUpdate = false)
         {

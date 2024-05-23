@@ -42,6 +42,37 @@ namespace ViL.Api.Controllers
             }
         }
 
+        [HttpGet("get-users")]
+        [ViLAuthorize(Role = "Admin")]
+        public IActionResult Get(int page = 1)
+        {
+            try
+            {
+                var pageSize = 20;
+                var query = _usersService.Get(user => user.Username != "viladmin").OrderBy(user => user.Username);
+                if (query == null || query.Count() == 0)
+                {
+                    return StatusCode(204);
+                }
+                var queryUser = query.Skip(pageSize * (--page)).Take(pageSize);
+                var users = new List<UserInfo>();
+                foreach (var item in queryUser)
+                {
+                    users.Add(new UserInfo(item));
+                }
+                var result = new
+                {
+                    Data = users,
+                    Totals = query.Count()
+                };
+
+                return Ok(result);
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
@@ -102,8 +133,11 @@ namespace ViL.Api.Controllers
         {
             try
             {
-                _usersService.Add(user);
-                return StatusCode(201);
+                var newUser = new Users(user.Username, user.Password);
+                newUser.Email = user.Email ?? "";
+                newUser.DisplayName = user.DisplayName == null || user.DisplayName == string.Empty ? user.Username : user.DisplayName;
+                _usersService.Add(newUser);
+                return StatusCode(201, newUser);
             } catch (Exception ex)
             {
                 var error = new
@@ -122,6 +156,11 @@ namespace ViL.Api.Controllers
             try
             {                
                 var user = _usersService.GetById(userInfo.UserId);
+                foreach (var prop in userInfo.GetType().GetProperties())
+                {
+                    var value = prop.GetValue(userInfo);
+                    user.GetType().GetProperty(prop.Name)?.SetValue(user, value);
+                }
                 if (user != null)
                 {
                     _usersService.Update(user);
@@ -195,6 +234,9 @@ namespace ViL.Api.Controllers
                 {
                     user.Password = modifier.NewPassword;
                     _usersService.Update(user);
+                } else if (user != null && user.Password != modifier.OldPassword)
+                {
+                    return StatusCode(401, "Mật khẩu không đúng!");
                 }
                 return Ok();
             } catch (Exception ex)
@@ -205,7 +247,7 @@ namespace ViL.Api.Controllers
 
         [HttpPut("ban-user")]
         [ViLAuthorize(Role = "Admin")]
-        public IActionResult BanUser(string userId, DateTime expired)
+        public IActionResult BanUser(string userId, BanedInfo baned)
         {
             try
             {
@@ -213,9 +255,10 @@ namespace ViL.Api.Controllers
                 if (query != null)
                 {
                     query.Status = (int)UserStatus.Banned;
-                    query.BannedExpired = expired;
-
-                    // BackgroundJob.Schedule(() => _usersService.UnlockUser(userId), expired);
+                    query.BannedExpired = DateTime.Now.AddDays(baned.Duration);
+                    query.About = baned.Reason;
+                    _usersService.Update(query);
+                    BackgroundJob.Schedule(() => _usersService.UnlockUser(userId), TimeSpan.FromDays(baned.Duration));
                 }
                 return Ok();
             } catch (Exception ex)
@@ -235,13 +278,12 @@ namespace ViL.Api.Controllers
                 {
                     if (query.Status == (int)UserStatus.Banned)
                     {
-                        query.Status = (int)UserStatus.Active;
-                        query.BannedExpired = null;
+                        _usersService.UnlockUser(userId);
                     }
                     return Ok();
                 } else
                 {
-                    return NotFound();
+                    return StatusCode(404, "Người dùng không tồn tại");
                 }
             }
             catch (Exception ex)

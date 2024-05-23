@@ -84,7 +84,7 @@ export default {
 }
 
 .float-menu-item:hover {
-    color: #10b18e;
+    color: #409eff;
 }
 
 .el-slider {

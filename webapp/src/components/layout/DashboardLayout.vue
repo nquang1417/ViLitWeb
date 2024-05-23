@@ -1,7 +1,7 @@
 <template>
+    <the-header :classList="{ 'is-hidden': !showHeader }" :height="40" dashboard></the-header>
     <el-container class="dashboard-layout">
         <slot name="dialog"></slot>
-        <the-header :classList="{ 'is-hidden': !showHeader }" :height="40" dashboard></the-header>
         <div class="background-img"></div>
         <el-container>
             <el-aside>
@@ -21,7 +21,7 @@
                         <el-icon>
                             <DataAnalysis />
                         </el-icon>
-                        <template #title>Dashboard</template>
+                        <template #title>Tổng quan</template>
                     </el-menu-item>
                     <el-sub-menu index="#">
                         <template #title>
@@ -31,24 +31,13 @@
                         <el-menu-item index="/dashboard/novel-management">Truyện đã đăng</el-menu-item>
                         <el-menu-item index="/dashboard/new-novel">Thêm truyện</el-menu-item>
                     </el-sub-menu>
-                    <el-menu-item index="">
-                        <el-icon>
-                            <document />
-                        </el-icon>
-                        <template #title>Navigator Three</template>
-                    </el-menu-item>
-                    <el-menu-item index="">
-                        <el-icon>
-                            <setting />
-                        </el-icon>
-                        <template #title>Settings</template>
-                    </el-menu-item>
+                    
                 </el-menu>
             </el-aside>
             <el-main>
                 <el-page-header :icon="null">
                     <template #title>
-                        <span class="text-large font-600 mr-3 title">Dashboard</span>
+                        <span class="text-large font-600 mr-3 title">Bảng điều khiển</span>
                     </template>
                     <template #content>
                         <span class="text-large font-600 mr-3">
@@ -108,6 +97,10 @@ export default {
 </script>
 
 <style scoped>
+.dashboard-layout * {
+    background-color: #fff !important;
+}
+
 .background-img {
     /* background-image: url('@/assets/background.jpg'); */
   background-size: cover;
@@ -207,5 +200,5 @@ export default {
     align-items: center;
     /* border-bottom: 1px solid #ccc; */
     background-color: #ecf5ff;
-
-}</style>
+}
+</style>

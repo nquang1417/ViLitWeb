@@ -1,5 +1,5 @@
 <script>
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import axios from 'axios'
 import dayjs from "dayjs"
 import { mapActions, mapGetters } from 'vuex'
@@ -22,7 +22,7 @@ export default {
     mounted() {
         this.loading = true
         this.loadNovel(1)
-
+        this.$api = inject('$api')
     },
     computed: {
         filterTableData() {
@@ -44,9 +44,16 @@ export default {
             this.$router.push(`/dashboard/edit-novel/${row.bookId}`)
         },
         async handleDelete(index, row) {
-            var url = `http://localhost:10454/api/BookInfo/delete?bookId=${row.bookId}`
-            await axios.delete(url)
-                .then()
+            var token = this.getUser.token
+            var owner = this.getUser.userId
+            await this.$api.novels.deleteNovel(row.bookId, token, owner)
+            // var url = `http://localhost:10454/api/BookInfo/delete?bookId=${row.bookId}`
+            // await axios.delete(url, )
+                .then(response => {
+                    if (response.status == 200) {
+                        this.novels = this.novels.filter(novel => novel.bookId != row.bookId)
+                    }
+                })
                 .catch(e => {
                     console.error(e)
                 })
@@ -59,12 +66,26 @@ export default {
                     uploaderId: `${this.getUser.userId}`
                 })
                 .then(response => {
-                    this.novels = JSON.parse(JSON.stringify(response.data.map(item => {
+                    this.novels = JSON.parse(JSON.stringify(response.data.data.map(item => {
                         item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm:ss");
                         item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm:ss");
+                        switch (item.status) {
+                            case 0:
+                                item.statusStr = "Tạm ngưng"
+                                break
+                            case 1:
+                                item.statusStr = "Đang tiến hành"
+                                break
+                            case 2:
+                                item.statusStr = "Hoàn thành"
+                                break
+                            case 3:
+                                item.statusStr = "Tạm khóa"
+                                break
+                        }
                         return item;
                     })));
-                    this.totalItems = response.data.length
+                    this.totalItems = response.data.totals
                 })
                 .catch(e => {
                     console.error(e)
@@ -87,14 +108,14 @@ export default {
                     
                     <el-table-column label="Tên truyện" prop="bookTitle" />
                     <el-table-column label="Tác giả" prop="authorName" />
-                    <el-table-column label="Trạng thái">
-                        <template #default="scope">
+                    <el-table-column label="Trạng thái" prop="statusStr">
+                        <!-- <template #default="scope">
                             <el-select v-model="scope.row.status" class="m-2">                                
                                 <el-option label="Đang tiến hành" :value=1></el-option>
                                 <el-option label="Hoàn thành" :value=2></el-option>
                                 <el-option label="Tạm ngưng" :value=0></el-option>
                             </el-select>
-                        </template>
+                        </template> -->
                     </el-table-column>
                     <el-table-column label="Ngày cập nhật" prop="updateDate" />
                     <el-table-column :align="'right'">

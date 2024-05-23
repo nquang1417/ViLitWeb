@@ -1,7 +1,8 @@
 <script lang="js">
-import { ElNotification } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import axios from 'axios'
 import { mapActions, mapGetters } from 'vuex';
+import { inject } from 'vue';
 export default {
     name: 'NewNovel',
     data() {
@@ -43,8 +44,9 @@ export default {
         next();
     },
     mounted() {
+        this.$api = inject('$api')
         this.loadGenres()
-
+        this.novelDetails.status = 1
         if (this.$route.name === 'EditNovel') {
             this.loadNovel()
         }
@@ -82,7 +84,7 @@ export default {
                 languagueCode: 1,
                 languageName: 'vi',
                 // tags: ref(),
-                status: '1',
+                status: 1,
                 createBy: '',
                 updateBy: '',
             }
@@ -95,19 +97,22 @@ export default {
             saveNovel: 'updateNovel'
         }),
         async update() {
-            try {
-
-                var url = `http://localhost:10454/api/BookInfo/update`
-                var respone = await axios.put(url, this.novelDetails, {
-                    headers: {
-                        'Content-Type': 'application/json-patch+json',
-                        'access_token': `${this.gettersAuthData.token}`,
-                        'ownerId': `${this.novelDetails.uploaderId}`
+            var bookId = this.novelDetails.bookId
+            var token = this.gettersAuthData.token
+            var owner = this.novelDetails.uploaderId
+            await this.$api.novels.updateNovel(bookId, this.novelDetails, token, owner) 
+                .then(response => {
+                    if (response.status == 200) {
+                        ElMessage({
+                            message: 'Cập nhật thành công!',
+                            type: 'success',
+                            duration: 1500
+                        })
                     }
                 })
-            } catch (error) {
-                console.error(error)
-            }
+                .catch(error => {
+                    console.error(error)
+                })
         },
         async submit() {
             try {
@@ -135,28 +140,21 @@ export default {
                 if (valid) {
 
                     if (this.$route.name === 'NewNovel') {
-                        ElNotification({
-                            title: 'Thành công',
+                        ElMessage({
                             message: 'Đăng tải thành công!',
-                            type: 'success',
+                            type: 'success', duration: 1500
                         })
                         this.submit()
 
                     }
-                    if (this.$route.name === 'EditNovel') {
-                        ElNotification({
-                            title: 'Thành công',
-                            message: 'Cập nhật thành công!',
-                            type: 'success',
-                        })
+                    if (this.$route.name === 'EditNovel') {                        
                         this.update()
-                        this.$router.back()
+                        this.$router.push(`/dashboard/workspace/${this.novelDetails.bookId}`)
                     }
                 } else {
-                    ElNotification({
-                        title: 'Lỗi',
+                    ElMessage({
                         message: 'Dữ liệu đầu vào không hợp lệ',
-                        type: 'error',
+                        type: 'error', duration: 1500
                     })
                 }
             })
@@ -188,12 +186,11 @@ export default {
         beforeUpload(rawFile) {
             // this.coverUrl = URL.createObjectURL(rawFile.raw);
             // var url  = URL.createObjectURL(rawFile.raw)
-            this.coverFile = rawFile
             if (rawFile.type !== 'image/jpeg') {
                 this.$message.error('Định dạng ảnh bìa phải là jpg!');
                 return false;
-            } else if (rawFile.size / 1024 / 1024 > 2) {
-                this.$message.error('Ảnh bìa không được có kích thước lớn hơn 2MB!');
+            } else if (rawFile.size / 1024 / 1024 > 10) {
+                this.$message.error('Ảnh bìa không được có kích thước lớn hơn 10MB!');
                 return false;
             }
             return true;
@@ -215,8 +212,7 @@ export default {
                 <span>Series</span>
             </div>
             <div class="detail-form__body">
-                <el-form ref="ruleFormRef" :model="this.novelDetails" label-width="120px" :rules="this.rules"
-                    status-icon>
+                <el-form ref="ruleFormRef" :model="this.novelDetails" label-width="120px" :rules="this.rules" label-position="right">
                     <el-form-item>
                         <el-upload class="cover-uploader" :action="this.uploadUrl" :show-file-list="false" :headers="this.uploadHeaders"
                             :on-success="handleSuccess" :before-upload="beforeUpload">
@@ -242,28 +238,29 @@ export default {
 
                     </el-form-item>
                     <el-form-item label="Thể loại" prop="genreId">
-                        <el-select v-model="this.novelDetails.genreId" class="m-2" placeholder="Chọn thể loại">
+                        <el-select v-model="this.novelDetails.genreId" class="m-2" placeholder="Chọn thể loại" style="width: 240px">
                             <el-option v-for="genre in this.genres" :key="genre.genreId" :label="genre.genreName"
                                 :value="genre.genreId"></el-option>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="Tags">
+                    <!-- <el-form-item label="Tags">
                         <el-checkbox-group v-model="this.novelDetails.tags">
                             <el-checkbox v-for="tag in this.tags" :key="tag.key" :value="tag.value"
                                 :label="tag.value"></el-checkbox>
                         </el-checkbox-group>
-                    </el-form-item>
+                    </el-form-item> -->
                     <el-form-item label="Trạng thái">
-                        <el-select v-model="this.novelDetails.status" class="m-2" placeholder="Trạng thái">
-                            <el-option label="Đang tiến hành" value="1"></el-option>
-                            <el-option label="Hoàn thành" value="2"></el-option>
-                            <el-option label="Tạm ngưng" value="0"></el-option>
+                        <el-select v-model="this.novelDetails.status" class="m-2" placeholder="Trạng thái" style="width: 240px" :disabled="this.novelDetails.status == 3">
+                            <el-option label="Đang tiến hành" :value="1"></el-option>
+                            <el-option label="Hoàn thành" :value="2"></el-option>
+                            <el-option label="Tạm khóa" :value="3"></el-option>
+                            <el-option label="Tạm ngưng" :value="0"></el-option>
                         </el-select>
                     </el-form-item>
                 </el-form>
             </div>
             <div class="detail-form__footer">
-                <el-row :gutter="12" justify="end">
+                <el-row :gutter="12" justify="end" style="margin: 0">
                     <el-button type="primary" @click="this.submitForm(this.$refs.ruleFormRef)">
                         {{ this.$route.name === 'EditNovel' ? 'Cập nhật' : 'Thêm truyện' }}
                     </el-button>
@@ -330,6 +327,10 @@ export default {
     text-align: center;
 }
 
+
+.detail-form__body {
+    padding: 0 15px;
+}
 .picture-class {
     height: 148px;
     width: 148px;

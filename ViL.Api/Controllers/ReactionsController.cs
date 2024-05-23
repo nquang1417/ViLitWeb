@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ViL.Api.Models;
+using ViL.Data.Models;
 using ViL.Services.Services;
 
 namespace ViL.Api.Controllers
@@ -35,14 +36,49 @@ namespace ViL.Api.Controllers
                 {
                     return Ok(false);
                 }
-                if (query.Status == 1)
+                else
                 {
-                    return Ok(true);
-                } else
-                {
-                    return Ok(false);
+                    if (query.Status == 1)
+                    {
+                        return Ok(true);
+                    }
+                    else
+                    {
+                        return Ok(false);
+                    }
                 }
             } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("follow-book")]
+        [ViLAuthorize]
+        public IActionResult FollowBook(string userId, string bookId)
+        {
+            try
+            {
+                var query = _favoriteBooksService.Get(record => record.BookId == bookId && record.UserId == userId).FirstOrDefault();
+                if (query == null)
+                {
+                    var newRecord = new UserFavoriteBooks(bookId, userId);
+                    _favoriteBooksService.Add(newRecord);
+                }
+                else
+                {
+                    switch (query.Status)
+                    {
+                        case 1:
+                            query.Status = 0; break;
+                        case 0:
+                            query.Status = 1; break;
+                    }
+                    _favoriteBooksService.Update(query);
+                }
+                return Ok();
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -123,7 +159,7 @@ namespace ViL.Api.Controllers
             }
         }
 
-
+        
 
     }
 }

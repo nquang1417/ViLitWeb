@@ -1,9 +1,19 @@
 <script lang="js">
+import { ElMessage } from 'element-plus';
+import { inject } from 'vue';
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
     name: 'SignupPage',
     data() {
+        const validateConfirmPass = (rule, value, callback) => {
+            if (value !== this.form.password) {
+                callback(new Error('Mật khẩu không trùng khớp'));
+            } else {
+                callback()
+            }
+        }
+
         return {
             form: {
                 username: '',
@@ -26,9 +36,11 @@ export default {
                     { required: true, message: 'Điền mật khẩu', trigger: 'blur' },
                 ],
                 confirmPass: [
-                    { required: true, message: 'Mật khẩu không trùng khớp', trigger: 'blur' },
+                    { required: true, message: 'Xác nhận lại mật khẩu', trigger: 'blur' },
+                    { validator: validateConfirmPass, message: 'Mật khẩu không trùng khớp', trigger: 'blur' }
                 ]
             },
+            showHeader: true,
         }
     },
     computed: {
@@ -36,6 +48,11 @@ export default {
             getterLoginStatus: 'getLoginStatus',
             gettersAuthData: 'getAuthData'
         })
+    },
+    mounted() {
+        this.lastScrollPosition = window.scrollY
+        window.addEventListener('scroll', this.onScroll)
+        this.$api = inject('$api')
     },
     watch: {
         getterLoginStatus(value) {
@@ -46,17 +63,47 @@ export default {
         ...mapActions('auth', {
             actionLogin: 'login'
         }),
-        async login() {
-            await this.actionLogin({ username: this.form.username, password: this.form.password });
-            console.log(this.getterLoginStatus)
-            if (this.getterLoginStatus == true) {
-                // alert('login sucess');
-                this.loginFailed = false
+        onScroll() {
+            if (window.scrollY < 0) {
+                return
+            }
+            if (Math.abs(window.scrollY - this.lastScrollPosition) < this.scrollOffset) {
+                return
+            }
+            this.showHeader = window.scrollY < this.lastScrollPosition
+            this.lastScrollPosition = window.scrollY
+        },
+        async login(username, password) {
+            await this.actionLogin({ username: username, password: password });
+            
+            if (this.getterLoginStatus == true) {                
                 this.$router.push('/dashboard')
             } else {
-                // alert('failed to login')
-                this.loginFailed = true
             }
+        },
+        async submitForm(formEl) {
+            if (!formEl) return
+            await formEl.validate((valid,fields) => {
+                if (valid) {
+                    ElMessage({message: 'Bạn đã đăng ký thành công', type:'success', duration: 1500})
+                    this.register()
+                } else {
+                    ElMessage({
+                        message: 'Dữ liệu đầu vào không hợp lệ',
+                        type: 'error',
+                        duration: 1500
+                    })
+                }
+            })
+        },
+        async register() {
+            await this.$api.users.register(this.form)
+                .then(response => {
+                    this.login(response.data.username, response.data.password)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
         },
         cancel() {
             this.$router.push('/')
@@ -67,57 +114,40 @@ export default {
 </script>
 
 <template>
+    <the-header :classList="{ 'is-hidden': !showHeader }"  :height="40" dashboard></the-header>
     <el-container class="signup-layout">
-        <div class="background-img"></div>
-        <el-header class="signup-header" :height="40">
-            <!-- <img src="@/assets/logo/logo.png" :height="40" @click="this.$router.push('/')">
-            <el-button>Đăng</el-button> -->
-            <el-menu :default-active="this.$route.path"  
-                class="el-menu-demo" mode="horizontal" 
-                :ellipsis="false" 
-                :router="true">
-                <el-menu-item index="/" class="logo">
-                    <img src="@/assets/logo/logo.png" :height="40">
-                </el-menu-item>
-                <div class="flex-grow"></div>
-
-                <el-menu-item index="/signup">Đăng nhập</el-menu-item>
-
-            </el-menu>  
-        </el-header>
+        <div class="background-img"></div>        
         <el-main>
             <div class="signup-form">
                 <div class="signup-form__header">Đăng ký</div>
                 <div class="signup-form__body">
-                    <el-form ref="ruleFormRef" :model="this.form" label-width="150px" :rules="this.rules" status-icon>
-                        <!-- <el-form-item v-if="this.loginFailed">
-                            <el-alert title="Đã có lỗi xảy ra!" type="error"
-                                description="Tên đăng nhập hoặc mật khẩu không đúng" show-icon />
-                        </el-form-item> -->
-                        <el-form-item label="Username" label-position="right" prop="username">
+                    <el-form ref="signUpForm" :model="this.form" label-width="150px" :rules="this.rules" status-icon>
+                        <el-form-item label="Tên tài khoản" label-position="right" prop="username">
                             <el-input v-model="form.username" autocomplete="off" />
                         </el-form-item>
-                        <el-form-item label="Email" label-position="right" prop="email">
+                        <el-form-item label="Họ tên" label-position="right" prop="displayName">
+                            <el-input v-model="form.displayName" autocomplete="off" />
+                        </el-form-item>
+                        <el-form-item label="Địa chỉ email" label-position="right" prop="email">
                             <el-input v-model="form.email" autocomplete="off" />
                         </el-form-item>
-                        <el-form-item label="Password" label-position="right" prop="password">
+                        <el-form-item label="Mật khẩu" label-position="right" prop="password">
                             <el-input type="password" show-password v-model="form.password" autocomplete="off" />
                         </el-form-item>
-                        <el-form-item label="Confirm Password" label-position="right" prop="confirmPass">
-                            <el-input type="password" show-password v-model="form.password" autocomplete="off" />
+                        <el-form-item label="Xác nhận mật khẩu" label-position="right" prop="confirmPass">
+                            <el-input type="password" show-password v-model="form.confirmPass" autocomplete="off" />
                         </el-form-item>
                     </el-form>
                 </div>
 
                 <div class="signup-form__footer">
                     <el-button @click="cancel">Hủy</el-button>
-                    <el-button type="primary" @click="login">
+                    <el-button type="primary" @click="submitForm(this.$refs.signUpForm)">
                         Đăng ký
                     </el-button>
                 </div>
             </div>
         </el-main>
-        <!-- <the-footer></the-footer> -->
     </el-container>
 </template>
 

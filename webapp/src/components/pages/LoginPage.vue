@@ -32,7 +32,7 @@ export default {
             if (this.getterLoginStatus == true) {
                 // alert('login sucess');
                 this.loginFailed = false
-                this.$router.push('/dashboard')
+                this.$router.push('/')
             } else {
                 // alert('failed to login')
                 this.loginFailed = true

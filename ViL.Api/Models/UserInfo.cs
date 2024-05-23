@@ -20,6 +20,7 @@ namespace ViL.Api.Models
         public int? FollowingItems { get; set; }
         public TimeSpan? HourReading { get; set; }
         public string? Url { get; set; }
+        public DateTime? BannedExpired { get; set; }
 
         public UserInfo() : base()
         {
@@ -39,6 +40,7 @@ namespace ViL.Api.Models
             FollowingItems = 0;
             HourReading = null;
             Url = null;            
+            BannedExpired = null;
         }
 
         public UserInfo(Users user)
@@ -69,6 +71,7 @@ namespace ViL.Api.Models
             UpdateDate = user.UpdateDate;
             CreateBy = user.CreateBy;
             CreateDate = user.CreateDate;
+            BannedExpired = user.BannedExpired;
         }
     }
 }

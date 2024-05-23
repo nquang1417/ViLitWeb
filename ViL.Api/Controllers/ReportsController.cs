@@ -18,21 +18,21 @@ namespace ViL.Api.Controllers
             _reportsService = reportsService;
         }
 
-        [HttpGet]
+        [HttpGet("all")]
         [ViLAuthorize(Role = "Admin")]
         public IActionResult GetAll()
         {
             try
             {
                 var query = _reportsService.GetAll();
-                return Ok();
+                return Ok(query);
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
 
-        [HttpGet("filter")]
+        [HttpPost("filter")]
         [ViLAuthorize(Role = "Admin")]
         public IActionResult FilterReports(FilterReports filter, int page = 1)
         {
@@ -61,7 +61,7 @@ namespace ViL.Api.Controllers
                 {
                     var result = new
                     {
-                        Data = query.Skip(pageSize * (--page)).Take(pageSize).ToList(),
+                        Data = query.OrderByDescending(report => report.CreateDate).Skip(pageSize * (--page)).Take(pageSize).ToList(),
                         Totals = query.Count()
                     };
                     return Ok(result);
@@ -84,7 +84,9 @@ namespace ViL.Api.Controllers
                 {
                     return BadRequest("Null Object!");
                 }
-                var newReport = new Reports(report.SenderId, report.ReportedType, report.ReportedEntityId, report.TargetType);
+                var newReport = new Reports(report.SenderId, report.ReportName, report.ReportedType, report.ReportedEntityId, report.TargetType, report.Message ?? "");
+                newReport.CreateBy = report.CreateBy;
+                newReport.UpdateBy = report.CreateBy;
                 _reportsService.Add(newReport);
                 return StatusCode(201, newReport.ReportsId);
             } catch (Exception ex)

@@ -1,5 +1,5 @@
 <template>
-    <el-card :body-style="{ padding: '0px' }" :id="novelId" @click="viewDetail()">
+    <el-card :body-style="{ padding: '0px' }" style="max-width: 220px;" :id="novelId" @click="viewDetail()">
         <div class="thumb">
             <img :src="cover" class="image" />
             <div class="novel-title">{{ title }}</div>
@@ -23,26 +23,24 @@ export default {
             coverUrl: {}
         }
     },
+    mounted() {
+        if (this.cover == "" || this.cover == null) {
+            this.cover = 'https://birkhauser.com/product-not-found.png'
+        }
+    },
     props: {
         cover: {
             type: String,
-            default: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
+            default: "https://birkhauser.com/product-not-found.png"
         },
         title: String,
         novelId: String,
-    },
-    computed: {
-        imageUrl() {
-            const relativePath = this.cover.replace(/\\/g, '/')
-            console.log(relativePath)
-            return require(`../${relativePath}`)
-        }
     },
     methods: {
         viewDetail() {
             console.log(this.novelId)
             this.$router.push({
-                path: `novel/${this.novelId}`,
+                path: `/novel/${this.novelId}`,
             })
         }
     }
@@ -53,6 +51,7 @@ export default {
 .el-card {
     cursor: pointer;
     margin: 10px 0;
+    /* aspect-ratio: 50/71; */
 }
 
 
@@ -103,6 +102,7 @@ export default {
 .image {
     width: 100%;
     display: block;
+    aspect-ratio: 50/71;
 }
 </style>
   

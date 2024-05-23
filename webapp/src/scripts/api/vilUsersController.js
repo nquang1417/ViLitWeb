@@ -1,12 +1,20 @@
 const baseUrl = 'http://localhost:10454/api/Users'
 var url = ``
 export default axios => ({
-    getUsers(userId) {
+    getUser(userId) {
         url = `${baseUrl}/${userId}`
         return axios.get(url)        
     },
     getAllUsers(token) {
         url = `${baseUrl}/all`
+        return axios.get(url, {
+            headers: {
+                "access_token": `${token}`
+            }
+        })
+    },
+    getUsersFilter(page, token) {
+        url = `${baseUrl}/get-users?page=${page}`
         return axios.get(url, {
             headers: {
                 "access_token": `${token}`
@@ -45,6 +53,22 @@ export default axios => ({
     },
     changeStatus(userId, status, token) {
         url = `${baseUrl}/change-status?userid=${userId}&status=${status}`
+        return axios.put(url, null, {
+            headers: {
+                'access_token': `${token}`
+            }
+        })
+    },
+    banUser(userId, payload, token) {
+        url = `${baseUrl}/ban-user?userId=${userId}`
+        return axios.put(url, payload, {
+            headers: {
+                'access_token': `${token}`
+            }
+        })
+    },
+    unlockUser(userId, token) {
+        url = `${baseUrl}/unlock-user?userId=${userId}`
         return axios.put(url, null, {
             headers: {
                 'access_token': `${token}`

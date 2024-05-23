@@ -21,6 +21,10 @@
 }
 
 @font-face {
+  font-family: "Times New Roman";
+  src: url("@/assets/font/times.ttf");
+}
+@font-face {
   font-family: "Roboto Medium";
   src: url("@/assets/font/Roboto-Medium.ttf");
 }
@@ -102,6 +106,14 @@ button:focus-visible {
   padding: 2em;
 }
 
+body {
+  background-color: #ebebeb;
+}
+
+#app .el-main {
+  background-color: #ebebeb;
+  
+}
 @media only screen and (min-width: 768px) {
   #app {
     max-width: 992px;
@@ -219,4 +231,21 @@ button:focus-visible {
 
 .el-header.is-hidden {
   transform: translateY(-100%);
+}
+
+
+.el-popper.is-report {
+  padding: 6px 12px;
+  color: #f56c6c;
+  /* background: linear-gradient(90deg, #f56c6c, #f55e5e); */
+  background-color: #fff;
+  border: 1px solid #f56c6c;
+}
+
+.el-popper.is-report .el-popper__arrow::before {
+  /* background: linear-gradient(45deg, #b2e68d, #bce689); */
+  right: 0;
+  /* background: linear-gradient(90deg, #f56c6c, #f55e5e); */
+  background-color: #fff;
+  border: 1px solid #f56c6c;
 }

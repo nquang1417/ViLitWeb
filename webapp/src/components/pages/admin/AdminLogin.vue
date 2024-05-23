@@ -11,7 +11,15 @@ export default {
             },
             loginFailed: false,
             unauthorized: false,
-
+            rules: {
+                username: [
+                    { required: true, message: 'Nhập tên tài khoản', trigger: 'blur' },
+                    
+                ],
+                password: [
+                    { required: true, message: 'Nhập mật khẩu', trigger: 'blur' },
+                ],
+            },
         }
     },
     computed: {
@@ -49,6 +57,15 @@ export default {
                 } 
             }
         },
+        async handleEnter(event) {
+            var elForm = this.$refs.loginForm
+            if (!elForm) return
+            await elForm.validate((valid, fields) => {
+                if (valid) {
+                    this.login()
+                }
+            })
+        },
         cancel() {
             this.$router.push('/')
         },
@@ -58,9 +75,7 @@ export default {
 </script>
 
 <template>
-    <el-container class="login-layout">
-        <div class="background-img"></div>
-        <el-header class="login-header" :height="40">
+    <el-header class="login-header" :height="40">
             <!-- <img src="@/assets/logo/logo.png" :height="40" @click="this.$router.push('/')">
             <el-button>Đăng</el-button> -->
             <el-menu :default-active="this.$route.path"  
@@ -75,8 +90,11 @@ export default {
 
             </el-menu>  
         </el-header>
+    <el-container class="login-layout">
+        <div class="background-img"></div>
+        
         <el-main>
-            <el-form class="login-form" :model="form">
+            <el-form ref="loginForm" class="login-form" :model="form" :rules="this.rules">
                 <el-form-item v-if="this.loginFailed">
                     <el-alert title="Đã có lỗi xảy ra!" 
                         type="error" 
@@ -89,11 +107,11 @@ export default {
                         description="Bạn không có quyền truy cập"
                         show-icon />
                 </el-form-item>
-                <el-form-item label="Username">
-                    <el-input v-model="form.username" autocomplete="off" />
+                <el-form-item label="Username" prop="username">
+                    <el-input v-model="form.username" autocomplete="off" @keydown.enter.native="handleEnter"/>
                 </el-form-item>
-                <el-form-item label="Password" label-position="right">
-                    <el-input type="password" show-password v-model="form.password" autocomplete="off" />
+                <el-form-item label="Password" prop="password" label-position="right">
+                    <el-input type="password" show-password v-model="form.password" autocomplete="off" @keydown.enter.native="handleEnter"/>
                 </el-form-item>
                 <el-form-item>
                     <div class="form-footer">

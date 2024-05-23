@@ -4,7 +4,7 @@ export default {
 }
 </script>
 <template>
-    <el-row :gutter="16">
+    <!-- <el-row :gutter="16">
         <el-col :span="8">
             <div class="statistic-card">
                 <el-statistic :value="95000">
@@ -88,7 +88,7 @@ export default {
                 </div>
             </div>
         </el-col>
-    </el-row>
+    </el-row> -->
 </template>
 
 <style scoped>

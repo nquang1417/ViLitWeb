@@ -3,12 +3,14 @@ using ViL.Data;
 using ViL.Data.Repositories;
 using ViL.Common.Exceptions;
 using ViL.Services.Infrastructure;
+using ViL.Common.Enums;
 
 namespace ViL.Services.Services
 {
     public interface IUsersService: IServices<Users>
     {
         public Users Login(string username, string password);
+        public void UnlockUser(string userId);
     }
 
     public class UsersService : ServiceBase<Users>, IUsersService
@@ -23,13 +25,28 @@ namespace ViL.Services.Services
             var user = _repository.Table.Where(u => u.Username == username).FirstOrDefault();
             if (user == null)
             {
-                throw new VilUnauthorizeExceptions("Tên người dùng không tồn tại");
+                throw new VilUnauthorizeExceptions("Tên người dùng không đúng");
             }
             else if (user.Password != password)
             {
                 throw new VilUnauthorizeExceptions("Mật khẩu không đúng");
             }
             return user;
+        }
+
+        public void UnlockUser(string userId)
+        {
+            var user = _repository.GetById(userId);
+            if (user != null)
+            {
+                user.Status = (int)UserStatus.Active;
+                user.About = string.Empty;
+                user.BannedExpired = null;
+                _repository.Update(user);
+            } else
+            {
+                throw new VilNotFoundExceptions("Người dùng không tồn tại");
+            }
         }
 
         protected override bool validate(Users entity, bool isUpdate = false)

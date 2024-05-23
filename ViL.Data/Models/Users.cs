@@ -49,7 +49,7 @@ namespace ViL.Data.Models
             DisplayName = username;
             Avatar = string.Empty;
             Cover = string.Empty;
-            Gender = 2;
+            Gender = -1;
             Email = string.Empty;
             Location = string.Empty;
             About = string.Empty;
@@ -59,6 +59,7 @@ namespace ViL.Data.Models
             FollowingItems = 0;
             HourReading = TimeSpan.Zero;
             Url = UserId + "_" + username;
+            BannedExpired = null;
         }
     }
 }

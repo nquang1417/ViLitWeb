@@ -12,39 +12,45 @@ namespace ViL.Data.Models
         [Key]
         public string ReportsId { get; set; }
         [Required]
-        public string SenderId { get; set; }
+        public string SenderId { get; set; }        
+        public string ReportName { get; set; }
         [Required]
         public int ReportedType { get; set; }
         [Required]
-        public int TargetType { get; set; }
+        public int TargetType { get; set; } // 0: User, 1: Novel, 2: Chapter
         [Required]
         public string ReportedEntityId { get; set; }
         public DateTime ReportedDate { get; set; }
-        public string? ReportContent { get; set; }
+        public string? Message { get; set; }
         public string? Response { get; set; }
 
         public Reports()
         {
+
             ReportsId = Guid.NewGuid().ToString();
             SenderId = string.Empty;
+            ReportName = string.Empty;
             ReportedType = 0;
             ReportedEntityId = string.Empty;
             TargetType = 0;
             ReportedDate = DateTime.Now;
-            ReportContent = string.Empty;
+            Message = string.Empty;
             Response = string.Empty;
+            Status = 0;
         }
 
-        public Reports(string senderId, int reportedType, string reportedEntityId, int targetType)
+        public Reports(string senderId, string name, int reportedType, string reportedEntityId, int targetType, string message = "")
         {
             ReportsId = Guid.NewGuid().ToString();
             SenderId = senderId;
+            ReportName = name;
             ReportedType = reportedType;
             ReportedEntityId = reportedEntityId;
             TargetType = targetType;
             ReportedDate = DateTime.Now;
-            ReportContent = "";
+            Message = message;
             Response = "";
+            Status = 0;
         }
     }
 }

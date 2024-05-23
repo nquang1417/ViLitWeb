@@ -47,18 +47,38 @@ import axios from 'axios'
 const actions = {
   async login({ commit }, payload) {
     const response = await axios
-      .post("http://localhost:10454/api/Login", payload)
-      .catch((err) => { console.log(err) })
+      .post("http://localhost:10454/api/Login", payload)      
+      .catch((err) => { return err})
     if (response && response.data) {
       commit("saveTokenData", response.data);
       commit("setLoginStatus", true);
     } else {
       commit("setLoginStatus", false);
     }
+    return response
   },
+  // async login({commit}, payload) {
+  //   await axios.post("http://localhost:10454/api/Login", payload)
+  //     .then(response => {
+  //       if (response.status == 200) {
+  //         commit("saveTokenData", response.data);
+  //         commit("setLoginStatus", true);
+  //       } else {
+  //         commit("setLoginStatus", false);
+  //       }
+  //       return response
+  //     })
+  //     .catch(error => {
+  //       commit("setLoginStatus", false);     
+  //       return error.response
+  //     })
+  // },
   logout({ commit }) {
     commit("clearTokenData");
     commit("setLoginStatus", false);
+  },
+  updateName({commit}, name) {
+    commit("setUserName", name)
   }
 };
 
@@ -81,6 +101,9 @@ const mutations = {
   },
   setLoginStatus(state, value) {
     state.loginStatus = value;
+  },
+  setUserName(state, name) {
+    state.authData.name = name
   },
   clearTokenData(state) {
     const emptyToken = {

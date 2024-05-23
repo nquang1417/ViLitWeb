@@ -1,6 +1,7 @@
 const state = () => {
     var  novel = JSON.parse(sessionStorage.getItem('novel')) ?? {}
     var chapter = JSON.parse(sessionStorage.getItem('chapter')) ?? {}
+    var sesstionGenre = JSON.parse(sessionStorage.getItem('genre')) ?? {}
     return {
         novelInfo: {
             bookId: novel.bookId ?? '',
@@ -32,6 +33,10 @@ const state = () => {
             chapterId: chapter.chapterId ?? '',
             chapterTitle: chapter.chapterTitle ?? '',
             chapterNum: chapter.chapterNum ?? 0
+        },
+        genre: {
+            genreId: sesstionGenre.genreId,
+            genreName: sesstionGenre.genreName,
         }
     }
 }
@@ -50,6 +55,9 @@ const getters = {
     },
     getChapterInfo(state) {
         return state.chapterInfo
+    },
+    getGenre(state) {
+        return state.genre
     }
 }
 
@@ -61,6 +69,10 @@ const mutations = {
     saveChapterInfo(state, data) {
         sessionStorage.setItem('chapter', JSON.stringify(data));
         state.chapterInfo = data
+    },
+    setGenre(state, data) {
+        sessionStorage.setItem('genre', JSON.stringify(data));
+        state.genre = data
     },
     clearInfo(state) {
         var newdata = {
@@ -90,10 +102,11 @@ const mutations = {
             updateDate: ''
         }
         var newChapter = {
-            ChapterId: '',
-            ChapterTitle: '',
-            ChapterNum: 0
+            chapterId: '',
+            chapterTitle: '',
+            chapterNum: 0
         }
+        
         state.novelInfo = newdata
         state.chapterInfo = newChapter
         sessionStorage.clear()
@@ -101,14 +114,14 @@ const mutations = {
 }
 
 const actions = {
-    // async editInfo({commit}, payload) {
-    //     var url = ``
-    // }
     updateNovel({commit}, data) {
         commit("saveNovelInfo", data)
     },
     updateChapter({commit}, data) {
         commit("saveChapterInfo", data)
+    },
+    commitGenre({commit}, data) {
+        commit("setGenre", data)
     },
     clearSession({commit}) {
         commit("clearInfo")

@@ -32,39 +32,26 @@ export default {
 </script>
 
 <template>
+    <the-header :classList="{ 'is-hidden': !showHeader }" :height="40" reading></the-header>
     <el-container class="reading-layout">
         <div class="background-img"></div>
-        <the-header :classList="{ 'is-hidden': !showHeader }" :height="40" reading></the-header>
-        <!-- <el-header class="reading-header">
-            <el-menu :default-active="this.$route.path" class="el-menu-demo reading-header__menu" mode="horizontal"
-                :ellipsis="false" :router="true">
-                <el-menu-item index="/" class="logo" style="padding: 0">
-                    <img src="@/assets/logo/logo.png" height="36">
-                </el-menu-item>
-                <div class="flex-grow"></div>
-                <el-menu-item class="signInBtn" v-if="!isSignedIn" style="align-self: center;">
-                    <login-modal></login-modal>
-                </el-menu-item>
-                <el-sub-menu index="#" v-if="isSignedIn">
-                    <template #title>Ngọc Quang</template>
-                    <el-menu-item index="#">Tài khoản</el-menu-item>
-                    <el-menu-item index="#">Kệ sách</el-menu-item>
-                    <el-menu-item index="#">Đánh dấu</el-menu-item>
-                    <el-menu-item index="#">Lịch sử đọc</el-menu-item>
-                    <el-menu-item index="#">Hệ thống</el-menu-item>
-                    <el-menu-item index="#">Đăng xuất</el-menu-item>
-                </el-sub-menu>
-            </el-menu>
-        </el-header> -->
-        <el-main>       
+        <slot name="dialog"></slot>
+        <el-main class="reading-main">       
             <el-page-header :icon="null">
                 <template #title>
                     <span class="text-large font-600 mr-3 title">
                         <slot name="header-content"></slot>
                     </span>
                 </template>
-                <slot name="chapter-nav"></slot>
+                <template #content>
+                    <span class="text-large font-600 mr-3 ">
+                        <slot name="chapter-title"></slot>
+                    </span>
+                </template>
             </el-page-header>
+            <div class="header-nav">
+                <slot name="chapter-nav"></slot>
+            </div>
             <slot></slot>   
             <div class="footer-nav">
                 <slot name="chapter-nav"></slot>
@@ -92,6 +79,16 @@ export default {
   bottom: 0px;
   left: 0px;
 }
+
+.reading-main {
+    padding: 20px 120px !important;
+    /* background-color: #fff !important; */
+}
+
+.reading-main * {
+    background-color: #fff !important;
+}
+
 .title {
     font-size: 20px;
 }
@@ -136,10 +133,28 @@ export default {
 }
 
 .footer-nav {
-    margin-top: 15px;
-    padding: 0 20px 20px;
+    /* padding: 0 20px 20px; */
     border: 1px solid #eee;
-    border-radius: 6px;
+    border-radius: 100px;
+    overflow: hidden;
+    padding: 10px 30px;
+    width: fit-content;
+    margin: 0 auto 0;
+    margin-top: 15px;
+
+    /* background-color: unset !important; */
+}
+
+.header-nav {
+    /* padding: 0 20px 20px; */
+    border: 1px solid #eee;
+    border-radius: 100px;
+    overflow: hidden;
+    padding: 10px 30px;
+    width: fit-content;
+    margin: 15px auto;
+    
+    /* background-color: unset !important; */
 }
 
 .cmt-box {

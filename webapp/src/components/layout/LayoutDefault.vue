@@ -1,8 +1,10 @@
 <template>
+    <the-header :classList="{ 'is-hidden': !showHeader }"></the-header>
     <el-container class="layout-default">
         <div class="background-img"></div>
-        <the-header :classList="{ 'is-hidden': !showHeader }" ></the-header>
-        <el-main>
+
+        <slot name="dialog"></slot>
+        <el-main>            
             <slot></slot>
         </el-main>
         <!-- <the-footer></the-footer> -->
@@ -43,20 +45,25 @@ export default {
 </script>
 
 <style scoped>
+
+.layout-default {
+    margin: 0 auto;
+    width: 90%;
+}
 .background-img {
-  /* background-image: url('@/assets/background.jpg'); */
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
-  background-position-y: center;
-  background-position-x: center;
-  opacity: 0.85;
-  content: "";
-  position: fixed;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
+    /* background-image: url('@/assets/background.jpg'); */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    background-position-y: center;
+    background-position-x: center;
+    opacity: 0.85;
+    content: "";
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
 }
 
 .el-main {
@@ -71,4 +78,6 @@ export default {
     background-color: blue;
     z-index: 10;
 }
+
+
 </style>

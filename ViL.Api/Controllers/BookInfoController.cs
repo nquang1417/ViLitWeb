@@ -4,6 +4,8 @@ using ViL.Data.Models;
 using ViL.Api.Models;
 using System.Linq.Expressions;
 using ViL.Common.Commons;
+using ViL.Common.Enums;
+using Hangfire;
 
 namespace ViL.Api.Controllers
 {
@@ -13,11 +15,19 @@ namespace ViL.Api.Controllers
     {
         private IBookInfoService _bookInfoService;
         private IUserFavoriteBooksService _userFavoriteBooksService;
+        private IBookStatisticsInfoService _bookStatisticsInfoService;
+        private INotificationsService _notificationsService;
 
-        public BookInfoController(IBookInfoService bookInfoService, IUserFavoriteBooksService userFavoriteBooksService)
+
+        public BookInfoController(IBookInfoService bookInfoService,
+                                  IUserFavoriteBooksService userFavoriteBooksService,
+                                  IBookStatisticsInfoService bookStatisticsInfoService,
+                                  INotificationsService notificationsService)
         {
             _bookInfoService = bookInfoService;
             _userFavoriteBooksService = userFavoriteBooksService;
+            _bookStatisticsInfoService = bookStatisticsInfoService;
+            _notificationsService = notificationsService;
         }
 
         [HttpGet("all")]
@@ -45,8 +55,54 @@ namespace ViL.Api.Controllers
         {
             try
             {
-                var query = _bookInfoService.GetAllDetails().OrderByDescending(book => book.UpdateDate).Take(20);
-                return Ok(query.ToList());
+                var query = _bookInfoService.GetAllDetails();
+                if (query == null)
+                {
+                    return StatusCode(204);
+                } else
+                {
+                    var result = query.AsEnumerable().OrderByDescending(book => book.UpdateDate).Take(20);
+                    return Ok(result);
+                }
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("book-stats")]
+        public IActionResult GetBookStats(string bookId)
+        {
+            try
+            {
+                var query = _bookStatisticsInfoService.Get(book => book.BookId == bookId).FirstOrDefault();
+                if (query == null)
+                {
+                    return NoContent();
+                }
+                return Ok(query);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("hot-books")]
+        public IActionResult GetHotBooks()
+        {
+            try
+            {
+                var query = _bookInfoService.GetAllDetails();
+                if (query == null)
+                {
+                    return StatusCode(204);
+                }
+                else
+                {
+                    var result = query.AsEnumerable().OrderByDescending(book => book.RankScore).Take(20);
+                    return Ok(result);
+                }
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -126,8 +182,15 @@ namespace ViL.Api.Controllers
                 }
                 if (filter.Status != null)
                 {
-                    Expression<Func<BookInfo, bool>> statusFilter = book => book.Status == filter.Status;
-                    condition = VilHelpers.AndAlso(condition, statusFilter);
+                    var statusConditions = new List<Expression<Func<BookInfo, bool>>>();
+
+                    foreach (var item in filter.Status)
+                    {
+                        Expression<Func<BookInfo, bool>> statusFilter = book => book.Status == item;
+                        statusConditions.Add(statusFilter);
+                    }
+                    var statusCondition = statusConditions.Aggregate((acc, next) => VilHelpers.OrElse(acc, next));
+                    condition = VilHelpers.AndAlso(condition, statusCondition);
                 }
                 if (filter.UploaderId != null && filter.UploaderId != string.Empty)
                 {
@@ -171,6 +234,8 @@ namespace ViL.Api.Controllers
                     Directory.CreateDirectory(folderPath);
                 }
                 _bookInfoService.Add(newBook);
+                var newNoti = new Notifications(1, newBook.UploaderId, $"Bạn đã tạo truyện mới với tiêu đề {newBook.BookTitle}");
+                _notificationsService.Add(newNoti);
                 return StatusCode(201, newBook);
             } catch (Exception ex)
             {
@@ -240,6 +305,34 @@ namespace ViL.Api.Controllers
             }
         }
 
+        [HttpPut("update-stats")]
+        public IActionResult UpdateStats(BookStatisticsInfo statsInfo)
+        {
+            try
+            {
+                var query = _bookStatisticsInfoService.Get(stats => stats.BookId == statsInfo.BookId).FirstOrDefault();
+                if (query == null)
+                {
+                    return BadRequest();
+                }
+                else
+                {
+                    query.Views = statsInfo.Views;
+                    query.Followers = statsInfo.Followers;
+                    query.Comments = statsInfo.Comments;
+                    query.Reviews = statsInfo.Reviews;
+                    query.AverageRating = statsInfo.AverageRating;
+                    query.UpdateDate = DateTime.Now;
+                }
+                _bookStatisticsInfoService.Update(query);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpDelete("delete")]
         [ViLAuthorize]
         public IActionResult Delete(string bookId)
@@ -295,20 +388,92 @@ namespace ViL.Api.Controllers
 
         [HttpGet("has-bookmarks")]
         [ViLAuthorize]
-        public IActionResult GetBooksHasBookmarks()
+        public IActionResult GetBooksHasBookmarks(string userId, int page = 1)
         {
             try
             {
-                var userId = HttpContext.Items["UserId"]?.ToString();
-                if (userId == null)
+                //var userId = HttpContext.Items["UserId"]?.ToString();
+                var pageSize = 5;
+                var query = _bookInfoService.GetBookHasBookmarks(userId);
+                var result = new
                 {
-                    return BadRequest();
+                    Data = query.Skip(pageSize * (--page)).Take(pageSize).ToList(),
+                    Totals = query.Count()
+                };
+                return Ok(result);
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("get-bookshelf")]
+        [ViLAuthorize]
+        public IActionResult GetFollowingBooks(string userId)
+        {
+            try
+            {
+                var query = _bookInfoService.GetFollowingBook(userId);
+                if (query == null)
+                {
+                    return StatusCode(204);
                 } else
                 {
-                    var query = _bookInfoService.GetBookHasBookmarks(userId);
                     return Ok(query.ToList());
                 }
             } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("lock-book")]
+        [ViLAuthorize(Role = "Admin")]
+        public IActionResult LockBook(string bookId, BanedInfo locked)
+        {
+            try
+            {
+                var query = _bookInfoService.GetById(bookId);
+                if (query != null)
+                {
+                    query.Status = (int)BookStatus.Locked;
+                    query.LockedExpired = DateTime.Now.AddDays(locked.Duration);
+                    query.LockedReason = locked.Reason;
+                    _bookInfoService.Update(query);
+                    BackgroundJob.Schedule(() => _bookInfoService.UnlockBook(bookId), TimeSpan.FromDays(locked.Duration));
+                    return Ok(query.LockedExpired);
+                } else
+                {
+                    return StatusCode(404, "Truyện không tồn tại");
+                }
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("unlock-book")]
+        [ViLAuthorize(Role = "Admin")]
+        public IActionResult UnlockBook(string bookId)
+        {
+            try
+            {
+                var query = _bookInfoService.GetById(bookId);
+                if (query != null)
+                {
+                    if (query.Status == (int)BookStatus.Locked)
+                    {
+                        _bookInfoService.UnlockBook(bookId);
+                    }
+                    return Ok();
+                }
+                else
+                {
+                    return StatusCode(404, "Truyện không tồn tại");
+                }
+            } 
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

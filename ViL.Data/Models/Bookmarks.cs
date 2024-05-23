@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ViL.Data.Models
 {
-    [Table("Bookmark")]
+    [Table("Bookmarks")]
     public class Bookmarks : EntityBase
     {
         [Key]

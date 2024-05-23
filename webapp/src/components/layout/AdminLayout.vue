@@ -1,7 +1,7 @@
 <template>
+    <the-header :classList="{ 'is-hidden': !showHeader }" :height="40" admin></the-header>
     <el-container class="admin-layout">
         <slot name="dialog"></slot>
-        <the-header :classList="{ 'is-hidden': !showHeader }" :height="40" admin></the-header>
         <div class="background-img"></div>
         
         <el-container>
@@ -20,34 +20,28 @@
 
                     <el-menu-item index="/admin/user-management">
                         <el-icon><User /></el-icon>
-                        <template #title>Users Management</template>
+                        <template #title>Quản lý người dùng</template>
                     </el-menu-item>
                     <el-sub-menu index="#">
                         <template #title>
                             <el-icon><Collection /></el-icon>
-                            <span>Sub menu</span>
+                            <span>Quản lý trang</span>
                         </template>
-                        <el-menu-item index="#">Item 1</el-menu-item>
-                        <el-menu-item index="#">Item 2</el-menu-item>
+                        <el-menu-item index="/admin/novel-management">Tiểu thuyết</el-menu-item>
+                        <el-menu-item index="/admin/report-management">Báo cáo vi phạm</el-menu-item>
                     </el-sub-menu>
-                    <el-menu-item index="">
-                        <el-icon>
-                            <document />
-                        </el-icon>
-                        <template #title>Menu Item 3</template>
-                    </el-menu-item>
-                    <el-menu-item index="">
+                    <!-- <el-menu-item index="">
                         <el-icon>
                             <setting />
                         </el-icon>
                         <template #title>Settings</template>
-                    </el-menu-item>
+                    </el-menu-item> -->
                 </el-menu>
             </el-aside>
-            <el-main>
+            <el-main >
                 <el-page-header :icon="null">
                     <template #title>
-                        <span class="text-large font-600 mr-3 title">Admin Page</span>
+                        <span class="text-large font-600 mr-3 title">Trung tâm quản lý</span>
                     </template>
                     <template #content>
                         <span class="text-large font-600 mr-3">
@@ -109,6 +103,10 @@ export default {
 <style scoped>
 .layout-overlay {
     z-index: 1000;
+}
+
+.admin-layout * {
+    background-color: #fff !important;
 }
 .background-img {
     /* background-image: url('@/assets/background.jpg'); */

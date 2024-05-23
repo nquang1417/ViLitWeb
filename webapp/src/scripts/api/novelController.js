@@ -10,6 +10,10 @@ export default axios => ({
         url = `${baseUrl}/details?bookId=${id}`
         return axios.get(url)
     },
+    getBookStats(id) {
+        url = `${baseUrl}/book-stats?bookId=${id}`
+        return axios.get(url)
+    },
     getNewUpdates() {
         url = `${baseUrl}/new-updates`
         return axios.get(url)
@@ -37,6 +41,45 @@ export default axios => ({
                 'Content-Type': 'application/json-patch+json',
                 'access_token': `${token}`,
                 'ownerId': `${owner}`
+            }
+        })
+    },
+    updateStat(payload) {
+        url = `${baseUrl}/update-stats`
+        return axios.put(url, payload)
+    },
+    getBookshelf(userId, token) {
+        url = `${baseUrl}/get-bookshelf?userId=${userId}`
+        return axios.get(url, {
+            headers: {
+                'access_token': `${token}`
+            }
+        })
+    },
+    getBookmarks(userId, pageNo, token) {
+        url = `${baseUrl}/has-bookmarks?userId=${userId}&page=${pageNo}`
+        return axios.get(url, {
+            headers: {
+                'access_token': `${token}`
+            }
+        })
+    },
+    getNewUpdate() {
+        
+    },
+    lockNovel(id, payload, token) {
+        url = `${baseUrl}/lock-book?bookId=${id}`
+        return axios.put(url, payload, {
+            headers: {
+                'access_token': `${token}`
+            }
+        })
+    },
+    unlockNovel(id, token) {
+        url = `${baseUrl}/unlock-book?bookId=${id}`
+        return axios.put(url, null, {
+            headers: {
+                'access_token': `${token}`
             }
         })
     },

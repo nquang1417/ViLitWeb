@@ -28,6 +28,9 @@ namespace ViL.Data.Views
         public int? Reviews { get; set; }
         public int? Comments { get; set; }
         public double? AverageRating { get; set; }
+        public double? RankScore { get; set; }
+        public DateTime? LockedExpired { get; set; }
+        public string? LockedReason { get; set; }
 
         public BookDetailsDTO()
         {
@@ -60,6 +63,10 @@ namespace ViL.Data.Views
             UpdateDate = book.UpdateDate;
             CreateBy = book.CreateBy;
             CreateDate = book.CreateDate;
+            RankScore = stats != null ?  stats.AverageRating * 0.5 + stats.Views * 0.25 + stats.Followers * 0.5 : 0;
+            LockedExpired = book.LockedExpired;
+            LockedReason = book.LockedReason;
+
         }
     }
 }

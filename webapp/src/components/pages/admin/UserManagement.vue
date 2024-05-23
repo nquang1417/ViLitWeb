@@ -1,9 +1,9 @@
 <script>
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import axios from 'axios'
 import dayjs from "dayjs"
 import { mapActions, mapGetters } from 'vuex'
-
+import { ElMessage } from 'element-plus'
 export default {
     name: 'UserManagement',
     data() {
@@ -16,7 +16,9 @@ export default {
             totalItems: 0,
             filter: {},
             formVisible: false,
-            selectedUser: {}
+            selectedUser: {},
+            bannedDialog: false,
+            bannedInfo: {},
         }
     },
     computed: {
@@ -28,31 +30,28 @@ export default {
         })
     },
     mounted() {
+        this.$api = inject('$api')        
         this.loadUsers(1)
     },
     methods: {
         checkFilter(data) {
-            //console.log(data)
             var result = !this.search || data.username.startsWith(this.search) || data.email.startsWith(this.search)
-            if (this.filter.status != null && typeof (this.filter.status) == 'number') {
-                console.log(typeof (this.filter.status))
-                result = result && (data.status === this.filter.status)
-                // console.log(`${data.username} ${data.status} ${result} ${this.filter.status}`)
+            if (this.filter.status != null && typeof (this.filter.status) == 'number') {                
+                result = result && (data.status === this.filter.status)                
             }
             return result
         },
+        formatDate(row, col) {
+            var date = dayjs(row.createDate).format("DD/MM/YYYY HH:mm:ss")
+            return date
+        },
         async loadUsers(page) {
-            var url = `http://localhost:10454/api/Users/all`
-            await axios
-                .get(url, {
-                    headers: {
-                        'access_token': `${this.getUser.token}`
-                    }
-                })
+            await this.$api.users.getUsersFilter(page, this.getUser.token)
                 .then(response => {
-                    this.users = JSON.parse(JSON.stringify(response.data.map(item => {
-                        item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm:ss");
-                        item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm:ss");
+                    this.users = JSON.parse(JSON.stringify(response.data.data.map(item => {
+                        
+                        // item.updateDate = dayjs(item.updateDate).format("DD/MM/YYYY HH:mm:ss");
+                        // item.createDate = dayjs(item.createDate).format("DD/MM/YYYY HH:mm:ss");
                         switch (item.gender) {
                             case 1:
                                 item.genderStr = 'Nam'
@@ -80,17 +79,59 @@ export default {
                         }
                         return item;
                     })));
-                    this.totalItems = response.data.length
+                    this.totalItems = response.data.totals
+                })
+                .catch(error => {
+                    console.error(error)
                 })
         },
         handleRowClick(row, col) {
+            this.selectedUser = row
             if (col.no != 5) {
                 this.formVisible = true
-                this.selectedUser = row
             }
         },
-        save() {
-            this.formVisible = false
+        async handleDelete(index, row) {
+            var token = this.getUser.token
+            await this.$api.users.deleteUser(row.userId, token)
+                .then(response => {
+                    if (response.status == 200) {
+                        this.users = this.users.filter(user => user.userId != row.userId)
+                        ElMessage({message:'Xóa người dùng thành công!', type: 'success', duration: 1500})
+                    }
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        },
+        async save(myForm) {
+            if (this.selectedUser.status != 2) {
+                if (myForm.formData.status != 2) {
+                    await this.$api.users.updateUser(myForm.formData, this.getUser.token)
+                        .then(() => {
+                            ElMessage({message: 'Cập nhật thành công!', type: 'success', duration: 1500})
+                            this.loadUsers(this.currentPage)
+                        })
+                        .catch(error => {
+                            console.error(error)
+                        })
+                    this.formVisible = false
+                } else {
+                    this.bannedDialog = true
+                }
+            } else {
+                if (myForm.formData.status != 2) {
+                    await this.$api.users.unlockUser(myForm.formData.userId, this.getUser.token)
+                        .then(() => {
+                            ElMessage({message: `Đã mở khóa tài khoản người dùng ${this.selectedUser.username}`, type: 'success', duration: 1500})
+                            this.loadUsers(this.currentPage)
+                        })
+                        .catch(error => {
+                            console.error(error)
+                        })
+                    this.formVisible = false
+                }
+            }
         },
         mouseEnter(row) {
             row.hovered = true
@@ -98,56 +139,63 @@ export default {
         mouseLeave(row) {
             row.hovered = false
         },
+        async lockUser() {
+            var userId = this.selectedUser.userId
+            
+            var token = this.getUser.token
+            await this.$api.users.banUser(userId, this.bannedInfo, token)
+                .then(response => {
+                    if (response.status == 200) {
+                        ElMessage({ message: `Người dùng ${this.selectedUser.username} đã bị khóa`, type: 'success', duration: 1500 })
+                        this.loadUsers(this.currentPage)
+                    }
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+            this.bannedDialog = false
+            this.formVisible = false
+        },
+        handleCurrentChange(val) {
+            this.loadUsers(val)
+        }
     },
-    watch: {
-        // selectedUser: {            
-        //     handler(value) {
-        //         console.log(`${value.gender} `)
-        //         switch (value.gender) {
-        //             case 1:
-        //                 value.genderStr = 'Nam'
-        //                 break
-        //             case 2:
-        //                 value.genderStr = "Nữ"
-        //                 break
-        //             case 0:
-        //                 value.genderStr = "Khác"
-        //                 break
-        //         }
-        //         switch (value.status) {
-        //             case 0:
-        //                 value.statusStr = "Không hoạt động"
-        //                 break
-        //             case 1:
-        //                 value.statusStr = "Đang hoạt động"
-        //                 break
-        //             case 2:
-        //                 value.statusStr = "Tạm khóa"
-        //                 break
-        //             case 3:
-        //                 value.statusStr = "Báo cáo vi phạm"
-        //                 break
-        //         }
-        //     },
-        //     deep: true
-        // }
-    }
 }
 </script>
 
 <template>
     <admin-layout>
-        <template #header-content>Users Management</template>
+        <template #header-content>Quản lí người dùng</template>
         <template #dialog>
             <!-- <user-info :dialogVisible="this.formVisible"></user-info>         -->
-            <el-dialog v-model="formVisible" width="80%" title="User Details" >
-                <user-info :data="this.selectedUser"
-                    @update:data="(newVal) => { console.log(newVal); this.selectedUser = newVal }"></user-info>
+            <el-dialog v-model="formVisible" width="70%" top="50px" title="Thông tin tài khoản" >
+                <user-info :data="this.selectedUser" :admin="true" ref="form"></user-info>
                 <template #footer>
                     <div class="dialog-footer">
-                        <el-button type="primary" @click="save">Lưu</el-button>
-                        <el-button @click="this.formVisible = false">Hủy</el-button>
-                        
+                        <el-button type="primary" @click="save(this.$refs.form)">Lưu</el-button>
+                        <el-button @click="this.formVisible = false">Hủy</el-button>                        
+                    </div>
+                </template>
+            </el-dialog>
+            <el-dialog v-model="bannedDialog" width="30%" title="Xác nhận khóa người dùng" >
+                <el-form ref="banForm" :model="bannedInfo" label-position="right" label-width="auto">
+                    <el-form-item label="Thời hạn">
+                        <el-select v-model="bannedInfo.duration" placeholder="-- Chọn thời hạn khóa tài khoản --">
+                            <el-option label="3 Ngày" :value="3"></el-option>
+                            <el-option label="7 Ngày" :value="7"></el-option>
+                            <el-option label="30 Ngày" :value="30"></el-option>
+                            <el-option label="3 Tháng" :value="90"></el-option>
+                            <el-option label="Vô thời hạn" :value="9999"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="Lý do">
+                        <el-input type="textarea" v-model="bannedInfo.reason"  :autosize="{ minRows: 5 }"></el-input>
+                    </el-form-item>
+                </el-form>
+                <template #footer>
+                    <div class="dialog-footer">
+                        <el-button type="primary" @click="lockUser">Xác nhận</el-button>
+                        <el-button @click="this.bannedDialog = false">Hủy</el-button>                        
                     </div>
                 </template>
             </el-dialog>
@@ -166,10 +214,10 @@ export default {
                     </el-tooltip>
                 </div>
                 <div class="filter-item">
-                    <span class="filter-item__label">Tìm kiếm: </span>
+                    <span class="filter-item__label">Lọc trạng thái: </span>
                     <el-tooltip class="box-item filter-item__input" effect="dark" content="Lọc theo trạng thái"
                         placement="top-start">
-                        <el-select v-model="filter.status" placeholder="Chọn trạng thái" class="m-2" clearable>
+                        <el-select v-model="filter.status" placeholder="---Chọn trạng thái---" style="width: 200px" class="m-2" clearable>
                             <el-option label="Đang hoạt động" :value=1></el-option>
                             <el-option label="Tạm khóa" :value=2></el-option>
                             <el-option label="Không hoạt động" :value=0></el-option>
@@ -186,16 +234,8 @@ export default {
 
                     <el-table-column label="Email" prop="email" show-overflow-tooltip />
                     <el-table-column label="Giới tính" prop="genderStr" width="80" show-overflow-tooltip />
-                    <el-table-column label="Ngày tạo" prop="createDate" show-overflow-tooltip sortable />
+                    <el-table-column label="Ngày tạo" prop="createDate" show-overflow-tooltip sortable :formatter="formatDate"/>
                     <el-table-column label="Trạng thái" prop="statusStr" width="200" resizable>
-
-                        <!-- <template #default="scope">
-                            <el-select v-model="scope.row.status" class="m-2">
-                                <el-option label="Đang hoạt động" :value=1></el-option>
-                                <el-option label="Tạm khóa" :value=2></el-option>
-                                <el-option label="Không hoạt động" :value=0></el-option>
-                            </el-select>
-                        </template> -->
                         <template #default="scope">
                             <div class="delete-options" v-if="scope.row.hovered">
                                 <div>{{ scope.row.statusStr }}</div>
@@ -204,18 +244,13 @@ export default {
                             </div>
                         </template>
                     </el-table-column>
-                    <!-- <el-table-column :align="'right'">
-                        <template #header>
-                            <el-tooltip class="box-item" effect="dark" content="Tìm kiếm theo username hoặc email"
-                                placement="top-start">
-                                <el-input v-model="search" size="small" placeholder="Tìm kiếm ..." />
-                            </el-tooltip>
-                        </template>
-                        <template #default="scope">
-                            
-                        </template>
-                    </el-table-column> -->
                 </el-table>
+            </div>
+            <div class="panel-footer">
+                <div class="flex-grow"></div>
+                <el-pagination v-model:current-page="currentPage" v-model:pageSize="pageSize" layout="prev, pager, next"
+                    :total="totalItems" background @current-change="handleCurrentChange">
+                </el-pagination>
             </div>
         </div>
 
@@ -249,6 +284,15 @@ export default {
     border-bottom: 1px solid #ccc;
 }
 
+.panel-footer {
+    display: flex;
+    background-color: #f5f5f5;
+    padding: 5px 0;
+}
+
+.flex-grow {
+    flex-grow: 1;
+}
 
 .search-bar {
     float: right;

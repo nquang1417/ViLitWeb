@@ -57,6 +57,10 @@ export default {
             saveNovel: 'updateNovel',
             selectChapter: 'updateChapter'
         }),
+        formatDate(date) {
+            var date = dayjs(date).format("DD/MM/YYYY HH:mm:ss")
+            return date
+        },
         async loadNovel() {
             await this.$api.novels.getDetails(this.novelId)
                 .then(response => {
@@ -70,6 +74,9 @@ export default {
             this.novelStatus = getBookStatusStr(this.novel.status)
             this.novel.CoverUrl = this.novel.bookCover            
             this.saveNovel(this.novel)
+        },
+        handleErrorCover() {
+            this.novel.CoverUrl = 'https://birkhauser.com/product-not-found.png'
         },
         async loadChapters(page) {
             this.loading = true
@@ -276,7 +283,7 @@ export default {
             </el-dialog>
         </template>
         <template #header-extra>
-            <el-button type="primary" @click="newDraft">Chương mới</el-button>
+            <el-button type="primary" @click="newDraft" v-if="novel.status != 3">Chương mới</el-button>
         </template>
         <el-container class="novel-details">
             <el-main>
@@ -285,7 +292,7 @@ export default {
                         <div class="top-part">
                             <el-row :gutter="30">
                                 <el-col :span="5" class="series-cover">
-                                    <img :src="this.novel.CoverUrl">
+                                    <img :src="this.novel.CoverUrl" @error="handleErrorCover">
                                 </el-col>
                                 <el-col :span="19" class="flex-col">
                                     <div class="series-info">
@@ -313,6 +320,13 @@ export default {
                                             </el-icon>
                                         </div>
                                         <span style="font-size: 15px;">{{ novel.description }}</span>
+                                    </div>
+                                    <div class="lockTag" v-if="novel.status == 3">
+                                        <el-tag type="danger" size="large" effect="dark">Truyện đang bị khóa</el-tag>
+                                        <div style="color: #f56c6c">Truyện bị khóa tới ngày <span
+                                                style="font-family: 'Roboto Italic';">{{
+                                                formatDate(novel.lockedExpired) }}</span></div>
+                                        <div style="color: #f56c6c">Lý do: {{ novel.lockedReason }}</div>
                                     </div>
                                     <div class="statistics">
                                         <el-row justify="space-between" :align="'middle'">
@@ -363,11 +377,12 @@ export default {
                                         v-loading="loading" @row-click="handleDraftsRowClick"
                                         @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave"
                                         :default-sort="{ prop: 'chapterNum', order: 'ascending' }">
-                                        <el-table-column prop="chapterNum"  label="STT" :align="'left'" sortable 
+                                        <el-table-column prop="chapterNum" label="STT" :align="'left'" sortable
                                             width="80" />
                                         <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="updateDate" label="Ngày cập nhật" sortable :align="'right'">
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" sortable
+                                            :align="'right'">
                                             <template #default="scope">
                                                 <div class="edit-options" v-if="scope.row.hovered">
                                                     <el-button size="small" plain
@@ -379,7 +394,7 @@ export default {
                                         </el-table-column>
                                         <template #empty>
                                             <div>Không có bản nháp nào</div>
-                                            <el-button type="primary" @click="newDraft">Tạo bản nháp mới</el-button>
+                                            <el-button type="primary" @click="newDraft" v-if="novel.status != 3">Tạo bản nháp mới</el-button>
                                         </template>
 
                                     </el-table>
@@ -398,13 +413,14 @@ export default {
                                     <el-table :data="chapters" stripe style="width: 100%" :show-header="false"
                                         v-loading="loading" @row-click="handleChapterRowClick"
                                         row-class-name="chapter-row" @cell-mouse-enter="mouseEnter"
-                                        @cell-mouse-leave="mouseLeave" 
+                                        @cell-mouse-leave="mouseLeave"
                                         :default-sort="{ prop: 'chapterNum', order: 'ascending' }">
-                                        <el-table-column prop="chapterNum"  label="STT" :align="'left'" sortable 
+                                        <el-table-column prop="chapterNum" label="STT" :align="'left'" sortable
                                             width="80" />
                                         <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'" sortable>
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'"
+                                            sortable>
                                             <template #default="scope">
                                                 <div class="edit-options" v-if="scope.row.hovered">
                                                     <el-button size="small" plain
@@ -436,11 +452,12 @@ export default {
                                         v-loading="loading" @row-click="handleChapterRowClick"
                                         @cell-mouse-enter="mouseEnter" @cell-mouse-leave="mouseLeave"
                                         :default-sort="{ prop: 'chapterNum', order: 'ascending' }">
-                                        <el-table-column prop="chapterNum"  label="STT" :align="'left'" sortable 
+                                        <el-table-column prop="chapterNum" label="STT" :align="'left'" sortable
                                             width="80" />
                                         <el-table-column prop="chapterTitle" label="Tiêu đề" :align="'left'"
                                             min-width="200" />
-                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'" sortable>
+                                        <el-table-column prop="updateDate" label="Ngày cập nhật" :align="'right'"
+                                            sortable>
                                             <template #default="scope">
                                                 <div class="edit-options" v-if="scope.row.hovered">
                                                     <el-button size="small" plain
@@ -475,6 +492,11 @@ export default {
     border: 1px solid #ccc;
     border-radius: 6px;
     margin: 20px;
+}
+
+.novel-details *:not(.el-button):not(.edit-options):not(.el-tag) {
+    background-color: #fff !important;
+
 }
 
 .block {
@@ -564,6 +586,12 @@ export default {
 
 .block {
     display: block;
+}
+
+.lockTag .el-tag{
+    background-color: #f56c6c !important;
+    font-size: 16px;
+    margin: 10px 0;
 }
 
 .feature-value {

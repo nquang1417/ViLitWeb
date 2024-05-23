@@ -1,14 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
-using System.Net;
-using System.Xml.Linq;
-using System;
-using ViL.Data;
+﻿using ViL.Data;
 using ViL.Data.Models;
 using ViL.Data.Repositories;
 using ViL.Data.Views;
 using ViL.Services.Infrastructure;
 using System.Linq.Expressions;
+using ViL.Common.Exceptions;
+using ViL.Common.Enums;
 
 namespace ViL.Services.Services
 {
@@ -17,6 +14,8 @@ namespace ViL.Services.Services
         BookDetailsDTO GetBookDetails(string id);
         IQueryable<BookDetailsDTO> GetAllDetails();
         IQueryable<BookInfo> GetBookHasBookmarks(string userId);
+        IQueryable<BookInfo> GetFollowingBook(string userId);
+        void UnlockBook(string bookId);
     }
     public class BookInfoService : ServiceBase<BookInfo>, IBookInfoService
     {
@@ -25,6 +24,7 @@ namespace ViL.Services.Services
         private IUsersRepository _usersRepository;
         private IBookChaptersRepository _bookChaptersRepository;
         private IBookmarksRepository _bookmarksRepository;
+        private IUserFavoriteBooksRepository _followingBooksRepository;
 
         public BookInfoService(IBookInfoRepository bookInfoRepository,
                                IBookStatisticsInfoRepository bookStatisticRepo,
@@ -32,6 +32,7 @@ namespace ViL.Services.Services
                                IGenresRepository genresRepo,
                                IUsersRepository userRepo,
                                IBookmarksRepository bookmarksRepository,
+                               IUserFavoriteBooksRepository followingBooksRepository,
                                ViLDbContext dbContext) : base(bookInfoRepository, dbContext)
         {
             _bookStatisticsInfoRepository = bookStatisticRepo;
@@ -39,6 +40,7 @@ namespace ViL.Services.Services
             _usersRepository = userRepo;
             _bookChaptersRepository = bookChaptersRepository;
             _bookmarksRepository = bookmarksRepository;
+            _followingBooksRepository = followingBooksRepository;
         }
 
         public override void Add(BookInfo entity)
@@ -70,6 +72,7 @@ namespace ViL.Services.Services
                         join genre in _genresRepository.Table on book.GenreId equals genre.GenreId
                         join uploader in _usersRepository.Table on book.UploaderId equals uploader.UserId
                         join stats in _bookStatisticsInfoRepository.Table on book.BookId equals stats.BookId
+                        where book.Status != (int)BookStatus.Locked
                         select new BookDetailsDTO(book, genre, stats, uploader);
             return query;
         }
@@ -94,7 +97,32 @@ namespace ViL.Services.Services
             var query = from book in _repository.Table
                         join bookmark in bookmarks on book.BookId equals bookmark.BookId
                         select book;
+            return query.Distinct();
+        }
+
+
+        public IQueryable<BookInfo> GetFollowingBook(string userId)
+        {
+            var query = from book in _repository.Table
+                        join following in _followingBooksRepository.Table on book.BookId equals following.BookId
+                        where following.UserId == userId && following.Status == 1
+                        select book;
             return query;
+        }
+
+        public void UnlockBook(string bookId)
+        {
+            var query = _repository.GetById(bookId);
+            if (query == null)
+            {
+                throw new VilNotFoundExceptions("Truyện không tồn tại");
+            } else
+            {
+                query.Status = (int)BookStatus.Ongoing;
+                query.LockedExpired = null;
+                query.LockedReason = string.Empty;
+                _repository.Update(query);
+            }
         }
     }
 }

@@ -8,10 +8,10 @@ namespace ViL.Api.Models
         public string? Title { get; set; }
         public string? GenreId { get; set; }
         public string? AuthorName { get; set; }
-        public int? Status { get; set; }
+        public List<int>? Status { get; set; }
         public string? UploaderId { get; set; }
 
-        public FilterBook(string? title = null, string? genreId = null, string? authorName = null, int? status = null, string? uploaderId = null)
+        public FilterBook(string? title = null, string? genreId = null, string? authorName = null, List<int>? status = null, string? uploaderId = null)
         {
             Title = title;
             GenreId = genreId;

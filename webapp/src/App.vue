@@ -9,6 +9,7 @@ export default {
 
 <template>
     <!-- <the-header></the-header> -->
+    
     <el-container class="page-view">
       <router-view/>
     </el-container>
@@ -25,8 +26,8 @@ export default {
 }
 
 .page-view {
-  margin: 0 auto;
-  width: 90%;
+  margin: 0;
+  width: 100%;
 }
 
 </style>

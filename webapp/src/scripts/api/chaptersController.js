@@ -19,6 +19,15 @@ export default axios => ({
             }
         })
     },
+    editChapterById(chapterId, token, owner) {
+        url = `${baseUrl}/edit-chapter?chapterId=${chapterId}`
+        return axios.get(url, {
+            headers: {
+                'access_token': `${token}`,
+                'ownerId': `${owner}`
+            }
+        })
+    },
     getDeleteds(bookId, pageNo, token, owner) {
         url = `${baseUrl}/get-deleteds?bookId=${bookId}&page=${pageNo}`
         return axios.get(url, {

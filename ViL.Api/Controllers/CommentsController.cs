@@ -56,7 +56,7 @@ namespace ViL.Api.Controllers
             }
         }
 
-        [HttpPost("edit")]
+        [HttpPut("edit")]
         [ViLAuthorize] 
         public IActionResult EditComment(ChapterComments comment)
         {

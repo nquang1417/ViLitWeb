@@ -1,15 +1,9 @@
 ﻿using Hangfire;
-using System;
 using Microsoft.AspNetCore.Mvc;
-
 using ViL.Api.Models;
 using ViL.Common.Enums;
 using ViL.Data.Models;
 using ViL.Services.Services;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Text;
 
 namespace ViL.Api.Controllers
 {
@@ -17,11 +11,17 @@ namespace ViL.Api.Controllers
     [Route("api/[controller]")]
     public class BookChaptersController : Controller
     {
-        public IBookChaptersService _bookChaptersService;
+        private IBookChaptersService _bookChaptersService;
+        private IBookInfoService _bookInfoService;
+        private INotificationsService _notificationsService;
 
-        public BookChaptersController(IBookChaptersService bookChaptersService)
+        public BookChaptersController(IBookChaptersService bookChaptersService,
+                                      IBookInfoService bookInfoService,
+                                      INotificationsService notificationsService)
         {
             _bookChaptersService = bookChaptersService;
+            _bookInfoService = bookInfoService;
+            _notificationsService = notificationsService;
         }
 
         [HttpGet("all-summary")]
@@ -215,22 +215,78 @@ namespace ViL.Api.Controllers
             try
             {
                 var query = _bookChaptersService.GetById(chapterId);
+                
                 if (query == null)
                 {
                     return StatusCode(204);
                 } else
                 {
-
-                    string path = query.FileName ?? string.Empty;
-                    var _content = System.IO.File.ReadAllBytes(path);
-                    var file = File(_content, "text/plain");
-                    return Ok(new {Chapter = query, File = file});
+                    var book = _bookInfoService.GetById(query.BookId);
+                    if (book != null && book.Status != (int)BookStatus.Locked)
+                    {
+                        string path = query.FileName ?? string.Empty;
+                        var _content = System.IO.File.ReadAllBytes(path);
+                        var file = File(_content, "text/plain");
+                        return Ok(new { Chapter = query, File = file });
+                    } else
+                    {
+                        if (book != null && book.Status == (int)BookStatus.Locked)
+                        {
+                            return StatusCode(404, new
+                            {
+                                Message = $"Truyện {book.BookTitle} hiện đang bị khóa",
+                                Reason = book.LockedReason,
+                                ExpiredDate = book.LockedExpired
+                            });
+                        } else
+                        {
+                            return StatusCode(404, "Truyện không tồn tại");
+                        }
+                    }
+                    
                 }
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("edit-chapter")]
+        [ViLAuthorize]
+        public IActionResult Edit(string chapterId)
+        {
+            try
+            {
+                var query = _bookChaptersService.GetById(chapterId);
+
+                if (query == null)
+                {
+                    return StatusCode(204);
+                }
+                else
+                {
+                    var book = _bookInfoService.GetById(query.BookId);
+                    if (book != null)
+                    {
+                        string path = query.FileName ?? string.Empty;
+                        var _content = System.IO.File.ReadAllBytes(path);
+                        var file = File(_content, "text/plain");
+                        return Ok(new { Chapter = query, File = file });
+                    }
+                    else
+                    {
+                        return StatusCode(404, "Truyện không tồn tại");
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
         [HttpGet("get-audio")]
         public IActionResult GetAudio(string chapterId)
         {
@@ -287,10 +343,19 @@ namespace ViL.Api.Controllers
         public IActionResult Add(BookChapters entity)
         {
             try
-            {
-                var uploader = HttpContext.Items["UserId"]?.ToString();
+            {                
                 _bookChaptersService.Add(entity);
-                
+                var message = "";
+                if (entity.Status == (int)ChapterStatus.Draft)
+                {
+                    message += $"Bản nháp chương {entity.ChapterTitle} đã được lưu";
+                } 
+                if (entity.Status == (int)ChapterStatus.Published)
+                {
+                    message += $"Chương {entity.ChapterTitle} đã được xuất bản";
+
+                }
+                var newNoti = new Notifications(1, entity.UploaderId, message);
                 return StatusCode(201, entity);
             } catch (Exception ex)
             {
@@ -320,7 +385,7 @@ namespace ViL.Api.Controllers
                 }
                 if (newChapter.Status == 1)
                 {
-                    //BackgroundJob.Enqueue(() => _bookChaptersService.ProcessAudioAsync(folderPath, fileName, newChapter.UploaderId));
+                    BackgroundJob.Enqueue(() => _bookChaptersService.ProcessAudioAsync(folderPath, fileName, newChapter.UploaderId, $"Chương {newChapter.ChapterTitle} đã hoàn tất chuyển sang audio"));
                 }
                 return StatusCode(201);
             } catch (Exception ex)
@@ -387,6 +452,17 @@ namespace ViL.Api.Controllers
                     return NotFound();
                 } else
                 {
+                    var message = "";
+                    if (status == (int)ChapterStatus.Draft)
+                    {
+                        message += $"Bản nháp chương {query.ChapterTitle} đã được lưu";
+                    }
+                    if (status == (int)ChapterStatus.Published)
+                    {
+                        message += $"Chương {query.ChapterTitle} đã được xuất bản";
+
+                    }
+                    var newNoti = new Notifications(1, query.UploaderId, message);
                     _bookChaptersService.ChangeStatus(query, status);
                     return Ok();
                 }

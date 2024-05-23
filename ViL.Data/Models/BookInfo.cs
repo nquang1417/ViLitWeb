@@ -22,6 +22,8 @@ namespace ViL.Data.Models
         public int? LanguageCode { get; set; }
         public string? LanguageName { get; set; }
         public string? Url { get; set; }
+        public DateTime? LockedExpired { get; set; }
+        public string? LockedReason { get; set; }
 
         public BookInfo() : base()
         {
@@ -36,6 +38,8 @@ namespace ViL.Data.Models
             LanguageCode = 0;
             LanguageName = string.Empty;
             Url = BookId;
+            LockedExpired = null;
+            LockedReason = string.Empty;
         }
 
         public BookInfo(string bookTitle, string genreId, string uploaderId) : base(creaeteBy: uploaderId, updateBy: uploaderId)
@@ -51,6 +55,8 @@ namespace ViL.Data.Models
             LanguageCode = 0;
             LanguageName = "vi";
             Url = $"..\\Data\\{BookId}";
+            LockedExpired = null;
+            LockedReason = string.Empty;
         }
     }
 }

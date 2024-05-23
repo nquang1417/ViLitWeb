@@ -9,7 +9,7 @@ namespace ViL.Services.Services
 {
     public interface IBookChaptersService : IServices<BookChapters>
     {
-        public void ProcessAudioAsync(string txtPath, string txtFileName, string? uploaderId);
+        public void ProcessAudioAsync(string txtPath, string txtFileName, string? uploaderId, string successMessage);
     }
 
     public class BookChaptersService : ServiceBase<BookChapters>, IBookChaptersService
@@ -43,7 +43,7 @@ namespace ViL.Services.Services
             return isValid;
         }
 
-        public void ProcessAudioAsync(string txtPath, string txtFileName, string? uploaderId)
+        public void ProcessAudioAsync(string txtPath, string txtFileName, string? uploaderId, string successMessage = "")
         {
             var flaskApiUrl = "http://127.0.0.1:5000/";
 
@@ -83,6 +83,7 @@ namespace ViL.Services.Services
                         if (uploaderId != null)
                         {
                             var successNotification = new Notifications((int)NotiType.Success, uploaderId, "Audio convertion success!");
+                            _notiService.Add(successNotification);
                         }
                     }
                     else

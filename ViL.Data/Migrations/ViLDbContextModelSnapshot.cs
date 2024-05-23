@@ -115,6 +115,12 @@ namespace ViL.Data.Migrations
                     b.Property<string>("LanguageName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("LockedExpired")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LockedReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -292,7 +298,7 @@ namespace ViL.Data.Migrations
 
                     b.HasKey("BookmarkId");
 
-                    b.ToTable("Bookmark");
+                    b.ToTable("Bookmarks");
                 });
 
             modelBuilder.Entity("ViL.Data.Models.ChapterComments", b =>
@@ -494,7 +500,11 @@ namespace ViL.Data.Migrations
                     b.Property<DateTime?>("CreateDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ReportContent")
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReportName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ReportedDate")

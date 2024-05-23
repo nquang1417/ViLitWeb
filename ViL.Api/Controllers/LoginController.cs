@@ -30,11 +30,25 @@ namespace ViL.Api.Controllers
             try
             {
                 var user = _usersService.Login(loginInfo.username, loginInfo.password);
-                var token = GenerateJwtToken(user);
-                return Ok(new { token });
+                if (user.Status == 1)
+                {
+                    var token = GenerateJwtToken(user);
+                    return Ok(new { token });
+                } else
+                {
+                    if (user.Status == 2)
+                    {
+                        return Unauthorized(new { Message = $"Tài khoản của bạn bị khóa đến ngày {user.BannedExpired} \n Lý do: {user.About}", Status = 2});
+                    }
+                    else
+                    {
+                        return Unauthorized(new { Message = "Tài khoản không hoạt động!", Status = 0 });
+                    }
+                }
+                
             } catch (Exception ex)
             {
-                return Unauthorized(ex.Message);
+                return Unauthorized(new { Message = ex.Message, Status = 1 });
             }
         }
 

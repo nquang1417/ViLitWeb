@@ -10,7 +10,7 @@ export default {
 
 <template>
     <dashboard-layout>
-        <!-- <template #header-content></template> -->
+        <template #header-content>Tổng quan</template>
         <router-view ></router-view>
     </dashboard-layout>
 </template>
